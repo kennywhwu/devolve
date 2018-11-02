@@ -9,10 +9,10 @@ const keyDict = {
   w: { player: 'small1', type: 'movement', action: 'up' },
   d: { player: 'small1', type: 'movement', action: 'right' },
   s: { player: 'small1', type: 'movement', action: 'down' },
-  h: { player: 'small2', type: 'movement', action: 'left' },
-  u: { player: 'small2', type: 'movement', action: 'up' },
-  k: { player: 'small2', type: 'movement', action: 'right' },
-  j: { player: 'small2', type: 'movement', action: 'down' },
+  g: { player: 'small2', type: 'movement', action: 'left' },
+  y: { player: 'small2', type: 'movement', action: 'up' },
+  j: { player: 'small2', type: 'movement', action: 'right' },
+  h: { player: 'small2', type: 'movement', action: 'down' },
   ArrowLeft: {
     player: 'big',
     type: 'movement',
@@ -31,37 +31,31 @@ const keyDict = {
   }
 };
 
+// Key for defining order of player colors
+const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
+
 class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
       board: this.createBoard(),
       players: this.createPlayerList(),
-      // // playerPosition defined by array of arrays of objects w/coordinates (ie. [[{y1, x1}, {y1, x2}],[{y2, x1},{y2, x2}]]
-      playerSmall1Position: this.createPlayerSmall(0),
-      playerSmall2Position: this.createPlayerSmall(2),
-      playerBigPosition: this.createPlayerBig()
-      // [{type: 'small', size: 1, etc.},{},{},...]
+      bigWin: false
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
-    this.setPositionPlayer = this.setPositionPlayer.bind(this);
-    this.move = this.move.bind(this);
+    this.setPlayerPosition = this.setPlayerPosition.bind(this);
+    this.setPlayerCoordinates = this.setPlayerCoordinates.bind(this);
+    this.moveDelay = this.moveDelay.bind(this);
+    this.movePlayer = this.movePlayer.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
-    this.p1Ready = true;
-    this.p1Delay = 0;
-    this.p2Ready = true;
-    this.p2Delay = 300;
   }
 
   static defaultProps = {
     xDimension: 15,
-    yDimension: 15,
-    playerSmall1Size: 1,
-    playerSmall2Size: 1,
-    playerBigSize: 2
+    yDimension: 15
   };
 
-  // Initializes board populated with 0's based on provided dimensions
+  // Initialize board populated with 0's based on provided dimensions
   createBoard() {
     let board = Array.from({ length: this.props.yDimension }).map((e1, y) => {
       return Array.from({ length: this.props.xDimension }).map((e2, x) => {
@@ -71,26 +65,54 @@ class Board extends Component {
     return board;
   }
 
+  // Create list of player objects based on props fed into Board
   createPlayerList() {
-    let playerList = [];
+    let playerList = {};
     for (let i = 0; i < this.props.players.big; i++) {
       let playerObj = {
         type: 'big',
-        color: 'blue',
-        size: 3
+        color: 'red',
+        border: '2px solid black',
+        size: 5,
+        moveReady: true,
+        delay: 300
       };
-      playerObj.position = this.setPositionPlayer(
+      playerObj.position = this.setPlayerPosition(
         0,
         this.props.xDimension - playerObj.size,
         playerObj.size
       );
-      playerList.push(playerObj);
+      playerObj.coordinates = this.setPlayerCoordinates(
+        playerObj.size,
+        playerObj.position
+      );
+      playerList.playerBig = playerObj;
     }
-    console.log('this', this);
+    for (let i = 0; i < this.props.players.small; i++) {
+      let playerObj = {
+        type: 'small',
+        color: playerColorKey[i],
+        border: '2px solid black',
+        size: 2,
+        moveReady: true,
+        delay: 0
+      };
+      playerObj.position = this.setPlayerPosition(
+        this.props.yDimension - playerObj.size - i * this.props.players.small,
+        i * this.props.players.small,
+        playerObj.size
+      );
+      playerObj.coordinates = this.setPlayerCoordinates(
+        playerObj.size,
+        playerObj.position
+      );
+      playerList[`playerSmall${i + 1}`] = playerObj;
+    }
+    return playerList;
   }
 
-  // Initializes creation and placement of playerBig
-  setPositionPlayer(initialY, initialX, size) {
+  // Initialize creation and placement of playerBig
+  setPlayerPosition(initialY, initialX, size) {
     return Array.from({ length: size }).map((e1, i1) =>
       Array.from({ length: size }).map((e2, i2) => ({
         y: initialY + i1,
@@ -99,7 +121,17 @@ class Board extends Component {
     );
   }
 
-  // General function to call action based on keypress
+  setPlayerCoordinates(size, position) {
+    let coord = new Set();
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        coord.add(`${position[i][j].y}-${position[i][j].x}`);
+      }
+    }
+    return coord;
+  }
+
+  // Call action based on keypress
   registerKeyPress(evt) {
     let keyDef = keyDict[evt.key.toString()];
     if (keyDef !== undefined) {
@@ -109,31 +141,79 @@ class Board extends Component {
     }
   }
 
-  // Sets delay on player movement
+  // Set delay on player movement
   async moveDelay(player, direction) {
     if (player === 'small1') {
-      if (this.p1Ready) {
-        this.p1Ready = false;
+      if (this.state.players.playerSmall1.moveReady) {
+        this.setState(st => ({
+          players: {
+            ...st.players,
+            playerSmall1: {
+              ...st.players.playerSmall1,
+              moveReady: !st.players.playerSmall1.moveReady
+            }
+          }
+        }));
         await setTimeout(() => {
-          this.p1Ready = true;
+          this.setState(st => ({
+            players: {
+              ...st.players,
+              playerSmall1: {
+                ...st.players.playerSmall1,
+                moveReady: !st.players.playerSmall1.moveReady
+              }
+            }
+          }));
           this.movePlayer(player, direction);
-        }, this.p1Delay);
+        }, this.state.players.playerSmall1.delay);
       }
     } else if (player === 'small2') {
-      if (this.p1Ready) {
-        this.p1Ready = false;
+      if (this.state.players.playerSmall2.moveReady) {
+        this.setState(st => ({
+          players: {
+            ...st.players,
+            playerSmall1: {
+              ...st.players.playerSmall1,
+              moveReady: !st.players.playerSmall1.moveReady
+            }
+          }
+        }));
         await setTimeout(() => {
-          this.p1Ready = true;
+          this.setState(st => ({
+            players: {
+              ...st.players,
+              playerSmall1: {
+                ...st.players.playerSmall1,
+                moveReady: !st.players.playerSmall1.moveReady
+              }
+            }
+          }));
           this.movePlayer(player, direction);
-        }, this.p1Delay);
+        }, this.state.players.playerSmall1.delay);
       }
-    } else {
-      if (this.p2Ready) {
-        this.p2Ready = false;
+    } else if (player === 'big') {
+      if (this.state.players.playerBig.moveReady) {
+        this.setState(st => ({
+          players: {
+            ...st.players,
+            playerBig: {
+              ...st.players.playerBig,
+              moveReady: !st.players.playerBig.moveReady
+            }
+          }
+        }));
         await setTimeout(() => {
-          this.p2Ready = true;
+          this.setState(st => ({
+            players: {
+              ...st.players,
+              playerBig: {
+                ...st.players.playerBig,
+                moveReady: !st.players.playerBig.moveReady
+              }
+            }
+          }));
           this.movePlayer(player, direction);
-        }, this.p2Delay);
+        }, this.state.players.playerBig.delay);
       }
     }
   }
@@ -145,21 +225,24 @@ class Board extends Component {
     let yChange = 0;
     let xChange = 0;
     let board = this.state.board;
+    let bigWin = this.state.bigWin;
+    let playerList = this.state.players;
     let position;
     let size;
     let playerNewPosition;
+    let coordinates;
     if (player === 'big') {
-      position = this.state.playerBigPosition;
-      size = this.props.playerBigSize;
-      playerNewPosition = this.state.playerBigPosition;
+      position = playerList.playerBig.position;
+      size = playerList.playerBig.size;
+      playerNewPosition = playerList.playerBig.position;
     } else if (player === 'small1') {
-      position = this.state.playerSmall1Position;
-      size = this.props.playerSmall1Size;
-      playerNewPosition = this.state.playerSmall1Position;
+      position = playerList.playerSmall1.position;
+      size = playerList.playerSmall1.size;
+      playerNewPosition = playerList.playerSmall1.position;
     } else if (player === 'small2') {
-      position = this.state.playerSmall2Position;
-      size = this.props.playerSmall2Size;
-      playerNewPosition = this.state.playerSmall2Position;
+      position = playerList.playerSmall2.position;
+      size = playerList.playerSmall2.size;
+      playerNewPosition = playerList.playerSmall2.position;
     }
 
     // Translate directions into y-x coordinate changes
@@ -173,10 +256,9 @@ class Board extends Component {
       xChange = +1;
     }
 
+    // Set boundaries of movement based on grid
     let minCorner = position[0][0];
     let maxCorner = position[size - 1][size - 1];
-
-    // Set boundaries of movement based on grid
     if (
       minCorner.x + xChange >= 0 &&
       maxCorner.x + xChange < this.props.xDimension &&
@@ -191,22 +273,81 @@ class Board extends Component {
       );
     }
 
-    // Set changedState object based on player to later set state
+    let playerBigCoord = playerList.playerBig.coordinates;
+    let playerSmall1Coord = playerList.playerSmall1.coordinates;
+    let playerSmall2Coord = playerList.playerSmall2.coordinates;
+    if (player === 'big') {
+      playerBigCoord = this.setPlayerCoordinates(
+        playerList.playerBig.size,
+        playerNewPosition
+      );
+    } else if (player === 'small1') {
+      playerSmall1Coord = this.setPlayerCoordinates(
+        playerList.playerSmall1.size,
+        playerNewPosition
+      );
+    } else if (player === 'small2') {
+      playerSmall2Coord = this.setPlayerCoordinates(
+        playerList.playerSmall2.size,
+        playerNewPosition
+      );
+    }
+
+    for (let item of playerBigCoord) {
+      if (playerSmall1Coord.has(item) || playerSmall2Coord.has(item)) {
+        bigWin = true;
+      }
+    }
+
+    // Set changedState object based on player, to later set state
     let changedState;
     if (player === 'big') {
       changedState = {
-        playerBigPosition: playerNewPosition,
-        board
+        players: {
+          ...playerList,
+          playerBig: {
+            ...playerList.playerBig,
+            position: playerNewPosition,
+            coordinates: this.setPlayerCoordinates(
+              playerList.playerBig.size,
+              playerNewPosition
+            )
+          }
+        },
+        board,
+        bigWin
       };
     } else if (player === 'small1') {
       changedState = {
-        playerSmall1Position: playerNewPosition,
-        board
+        players: {
+          ...playerList,
+          playerSmall1: {
+            ...playerList.playerSmall1,
+            position: playerNewPosition,
+            coordinates: this.setPlayerCoordinates(
+              playerList.playerSmall1.size,
+              playerNewPosition
+            )
+          }
+        },
+        board,
+        bigWin
       };
     } else if (player === 'small2') {
       changedState = {
-        playerSmall2Position: playerNewPosition,
-        board
+        players: {
+          ...playerList,
+          playerSmall2: {
+            ...playerList.playerSmall2,
+            position: playerNewPosition,
+            coordinates: this.setPlayerCoordinates(
+              playerList.playerSmall2.size,
+              playerNewPosition
+            )
+          }
+        },
+        board,
+        bigWin
       };
     }
 
@@ -215,78 +356,60 @@ class Board extends Component {
   }
 
   render() {
+    let playerList = this.state.players;
+    if (this.state.bigWin) {
+      window.document.removeEventListener('keydown', this.registerKeyPress);
+    }
+
     // Loop through array of arrays to create board with HTML based on coordinates
-
-    // Set all playerBig coordinates
-    let playerBigCoord = new Set();
-    for (let i = 0; i < this.props.playerBigSize; i++) {
-      for (let j = 0; j < this.props.playerBigSize; j++) {
-        playerBigCoord.add(
-          `${this.state.playerBigPosition[i][j].y}-${
-            this.state.playerBigPosition[i][j].x
-          }`
-        );
-      }
-    }
-
-    let playerSmall1Coord = new Set();
-    for (let i = 0; i < this.props.playerSmall1Size; i++) {
-      for (let j = 0; j < this.props.playerSmall1Size; j++) {
-        playerSmall1Coord.add(
-          `${this.state.playerSmall1Position[i][j].y}-${
-            this.state.playerSmall1Position[i][j].x
-          }`
-        );
-      }
-    }
-    let playerSmall2Coord = new Set();
-    for (let i = 0; i < this.props.playerSmall2Size; i++) {
-      for (let j = 0; j < this.props.playerSmall2Size; j++) {
-        playerSmall2Coord.add(
-          `${this.state.playerSmall2Position[i][j].y}-${
-            this.state.playerSmall2Position[i][j].x
-          }`
-        );
-      }
-    }
-
     let tblBoard = [];
     for (let y = 0; y < this.props.yDimension; y++) {
       let row = [];
-
       for (let x = 0; x < this.props.xDimension; x++) {
         let coord = `${y}-${x}`;
 
-        // Set cell to be playerSmall1
-        if (playerSmall1Coord.has(coord)) {
-          row.push(
-            <PlayerSmall
-              key={coord}
-              backgroundColor="red"
-              border="2px solid black"
-            />
-          );
-        } else if (playerSmall2Coord.has(coord)) {
-          row.push(
-            <PlayerSmall
-              key={coord}
-              backgroundColor="green"
-              border="2px solid black"
-            />
-          );
-
-          // Set cell to be playerBig
-        } else if (playerBigCoord.has(coord)) {
+        // Set cell to be playerBig
+        if (
+          playerList.playerBig &&
+          playerList.playerBig.coordinates.has(coord)
+        ) {
           row.push(
             <PlayerBig
               key={coord}
-              backgroundColor="blue"
-              border="2px solid black"
+              backgroundColor={playerList.playerBig.color}
+              border={playerList.playerBig.border}
             />
           );
+        }
+        // Set cell to be playerSmall1
+        else if (
+          playerList.playerSmall1 &&
+          playerList.playerSmall1.coordinates.has(coord)
+        ) {
+          row.push(
+            <PlayerSmall
+              key={coord}
+              backgroundColor={playerList.playerSmall1.color}
+              border={playerList.playerSmall1.border}
+            />
+          );
+        }
+        // Set cell to be playerSmall2
+        else if (
+          playerList.playerSmall2 &&
+          playerList.playerSmall2.coordinates.has(coord)
+        ) {
+          row.push(
+            <PlayerSmall
+              key={coord}
+              backgroundColor={playerList.playerSmall2.color}
+              border={playerList.playerSmall2.border}
+            />
+          );
+        }
 
-          // Set cell to be empty
-        } else {
+        // Set cell to be empty
+        else {
           row.push(<td className="cell" key={coord} coord={coord} />);
         }
       }
@@ -299,9 +422,19 @@ class Board extends Component {
     }
 
     return (
-      <table className="Board">
-        <tbody>{tblBoard}</tbody>
-      </table>
+      <div className="Board">
+        <table className="Board">
+          <tbody>{tblBoard}</tbody>
+        </table>
+        {this.state.bigWin ? (
+          <h1>
+            You've been eaten by the{' '}
+            <span style={{ color: 'red' }}>BEAST!!!</span>
+          </h1>
+        ) : (
+          undefined
+        )}
+      </div>
     );
   }
 }
