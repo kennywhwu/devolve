@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
-import './silas.png';
 
 // Reference translation for key press to expected action
 const keyDict = {
@@ -34,6 +33,11 @@ const keyDict = {
 
 // Key for defining order of player colors
 const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
+
+// Border Size
+const BORDER_SIZE = 1;
+
+// Board class
 
 class Board extends Component {
   constructor(props) {
@@ -81,8 +85,8 @@ class Board extends Component {
         delay: 200
       };
       playerObj.position = this.setPlayerPosition(
-        0,
-        this.props.xDimension - playerObj.size,
+        BORDER_SIZE,
+        this.props.xDimension - playerObj.size - BORDER_SIZE,
         playerObj.size
       );
       playerObj.coordinates = this.setPlayerCoordinates(
@@ -101,8 +105,11 @@ class Board extends Component {
         delay: 0
       };
       playerObj.position = this.setPlayerPosition(
-        this.props.yDimension - playerObj.size - i * playerObj.size,
-        i * playerObj.size,
+        this.props.yDimension -
+          playerObj.size -
+          i * playerObj.size -
+          BORDER_SIZE,
+        i * playerObj.size + BORDER_SIZE,
         playerObj.size
       );
       playerObj.coordinates = this.setPlayerCoordinates(
@@ -263,10 +270,10 @@ class Board extends Component {
     let minCorner = position[0][0];
     let maxCorner = position[size - 1][size - 1];
     if (
-      minCorner.x + xChange >= 0 &&
-      maxCorner.x + xChange < this.props.xDimension &&
-      minCorner.y + yChange >= 0 &&
-      maxCorner.y + yChange < this.props.yDimension
+      minCorner.x + xChange >= BORDER_SIZE &&
+      maxCorner.x + xChange < this.props.xDimension - BORDER_SIZE &&
+      minCorner.y + yChange >= BORDER_SIZE &&
+      maxCorner.y + yChange < this.props.yDimension - BORDER_SIZE
     ) {
       // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
       // board[newY][newX] = 2;
@@ -387,6 +394,7 @@ class Board extends Component {
   }
 
   // Reset game
+  resetGame() {}
 
   render() {
     let playerList = this.state.players;
@@ -440,7 +448,21 @@ class Board extends Component {
           );
         }
         // Set cell to be playerSmall1
-
+        else if (
+          y === 0 ||
+          x === 0 ||
+          y === this.props.yDimension - BORDER_SIZE ||
+          x === this.props.xDimension - BORDER_SIZE
+        ) {
+          row.push(
+            <td
+              className="cell"
+              key={coord}
+              coord={coord}
+              style={{ backgroundColor: 'gray' }}
+            />
+          );
+        }
         // Set cell to be empty
         else {
           row.push(<td className="cell" key={coord} coord={coord} />);
