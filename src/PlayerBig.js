@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
-import './PlayerBig.css';
+// import './PlayerBig.css';
 
 class PlayerBig extends Component {
   render() {
-    return <td className="PlayerBig" />;
+    const style = {
+      backgroundColor: this.props.backgroundColor,
+      border: this.props.border
+    };
+    return <td className="PlayerBig" style={style} />;
   }
 }
 

@@ -7,10 +7,11 @@ class App extends Component {
     return (
       <div className="App">
         <Board
-          xDimension={15}
-          yDimension={15}
-          playerSmallSize={1}
-          playerBigSize={3}
+          xDimension={10}
+          yDimension={10}
+          players={{ big: 1, small: 2 }}
+          // playerSmall2Size={2}
+          // playerBigSize={3}
         />
       </div>
     );

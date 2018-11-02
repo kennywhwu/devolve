@@ -36,15 +36,13 @@ class Board extends Component {
     super(props);
     this.state = {
       board: this.createBoard(),
-      players: this.createPlayerList(),
       // // playerPosition defined by array of arrays of objects w/coordinates (ie. [[{y1, x1}, {y1, x2}],[{y2, x1},{y2, x2}]]
       playerSmall1Position: this.createPlayerSmall(0),
       playerSmall2Position: this.createPlayerSmall(2),
-      playerBigPosition: this.createPlayerBig()
-      // [{type: 'small', size: 1, etc.},{},{},...]
+      playerBigPosition: this.createPlayerBig(),
+      players: this.createPlayerList()
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
-    this.setPositionPlayer = this.setPositionPlayer.bind(this);
     this.move = this.move.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
     this.p1Ready = true;
@@ -71,30 +69,37 @@ class Board extends Component {
     return board;
   }
 
-  createPlayerList() {
-    let playerList = [];
-    for (let i = 0; i < this.props.players.big; i++) {
-      let playerObj = {
-        type: 'big',
-        color: 'blue',
-        size: 3
-      };
-      playerObj.position = this.setPositionPlayer(
-        0,
-        this.props.xDimension - playerObj.size,
-        playerObj.size
-      );
-      playerList.push(playerObj);
-    }
-    console.log('this', this);
+  // Initializes creation and placement of playerBig
+  createPlayerBig() {
+    let dimension = this.props.playerBigSize;
+
+    return Array.from({ length: dimension }).map((e1, i1) =>
+      Array.from({ length: dimension }).map((e2, i2) => ({
+        y: i1,
+        x: this.props.xDimension - (dimension - i2)
+      }))
+    );
   }
 
   // Initializes creation and placement of playerBig
-  setPositionPlayer(initialY, initialX, size) {
-    return Array.from({ length: size }).map((e1, i1) =>
-      Array.from({ length: size }).map((e2, i2) => ({
-        y: initialY + i1,
-        x: initialX + i2
+  setPositionPlayerSmall(offset) {
+    let dimension = this.props.playerSmall1Size;
+
+    return Array.from({ length: dimension }).map((e1, i1) =>
+      Array.from({ length: dimension }).map((e2, i2) => ({
+        y: this.props.yDimension - (dimension - i1) - offset,
+        x: i2 + offset
+      }))
+    );
+  }
+
+  createPlayer(player) {
+    let dimension = this.props.playerSmall1Size;
+
+    return Array.from({ length: dimension }).map((e1, i1) =>
+      Array.from({ length: dimension }).map((e2, i2) => ({
+        y: this.props.yDimension - (dimension - i1) - offset,
+        x: i2 + offset
       }))
     );
   }
