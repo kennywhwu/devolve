@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
+import './silas.png';
 
 // Reference translation for key press to expected action
 const keyDict = {
@@ -40,7 +41,8 @@ class Board extends Component {
     this.state = {
       board: this.createBoard(),
       players: this.createPlayerList(),
-      bigWin: false
+      bigWin: false,
+      timer: 0
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
     this.setPlayerPosition = this.setPlayerPosition.bind(this);
@@ -48,6 +50,7 @@ class Board extends Component {
     this.moveDelay = this.moveDelay.bind(this);
     this.movePlayer = this.movePlayer.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
+    this.startTimer();
   }
 
   static defaultProps = {
@@ -73,9 +76,9 @@ class Board extends Component {
         type: 'big',
         color: 'red',
         border: '2px solid black',
-        size: 5,
+        size: 7,
         moveReady: true,
-        delay: 300
+        delay: 200
       };
       playerObj.position = this.setPlayerPosition(
         0,
@@ -93,13 +96,13 @@ class Board extends Component {
         type: 'small',
         color: playerColorKey[i],
         border: '2px solid black',
-        size: 2,
+        size: 1,
         moveReady: true,
         delay: 0
       };
       playerObj.position = this.setPlayerPosition(
-        this.props.yDimension - playerObj.size - i * this.props.players.small,
-        i * this.props.players.small,
+        this.props.yDimension - playerObj.size - i * playerObj.size,
+        i * playerObj.size,
         playerObj.size
       );
       playerObj.coordinates = this.setPlayerCoordinates(
@@ -121,6 +124,7 @@ class Board extends Component {
     );
   }
 
+  // Translate position object into string coordinate
   setPlayerCoordinates(size, position) {
     let coord = new Set();
     for (let i = 0; i < size; i++) {
@@ -230,7 +234,6 @@ class Board extends Component {
     let position;
     let size;
     let playerNewPosition;
-    let coordinates;
     if (player === 'big') {
       position = playerList.playerBig.position;
       size = playerList.playerBig.size;
@@ -275,26 +278,42 @@ class Board extends Component {
 
     let playerBigCoord = playerList.playerBig.coordinates;
     let playerSmall1Coord = playerList.playerSmall1.coordinates;
-    let playerSmall2Coord = playerList.playerSmall2.coordinates;
-    if (player === 'big') {
-      playerBigCoord = this.setPlayerCoordinates(
-        playerList.playerBig.size,
-        playerNewPosition
-      );
-    } else if (player === 'small1') {
-      playerSmall1Coord = this.setPlayerCoordinates(
-        playerList.playerSmall1.size,
-        playerNewPosition
-      );
-    } else if (player === 'small2') {
-      playerSmall2Coord = this.setPlayerCoordinates(
-        playerList.playerSmall2.size,
-        playerNewPosition
-      );
+    let playerSmall2Coord;
+
+    if (playerList.playerBig) {
+      playerBigCoord = playerList.playerBig.coordinates;
+      if (player === 'big') {
+        playerBigCoord = this.setPlayerCoordinates(
+          playerList.playerBig.size,
+          playerNewPosition
+        );
+      }
+    }
+    if (playerList.playerSmall1) {
+      playerSmall1Coord = playerList.playerSmall1.coordinates;
+      if (player === 'small1') {
+        playerSmall1Coord = this.setPlayerCoordinates(
+          playerList.playerSmall1.size,
+          playerNewPosition
+        );
+      }
+    }
+    if (playerList.playerSmall2) {
+      playerSmall2Coord = playerList.playerSmall2.coordinates;
+      if (player === 'small2') {
+        playerSmall2Coord = this.setPlayerCoordinates(
+          playerList.playerSmall2.size,
+          playerNewPosition
+        );
+      }
     }
 
     for (let item of playerBigCoord) {
-      if (playerSmall1Coord.has(item) || playerSmall2Coord.has(item)) {
+      if (playerSmall2Coord === undefined) {
+        if (playerSmall1Coord.has(item)) {
+          bigWin = true;
+        }
+      } else if (playerSmall1Coord.has(item) || playerSmall2Coord.has(item)) {
         bigWin = true;
       }
     }
@@ -355,6 +374,20 @@ class Board extends Component {
     this.setState(st => changedState);
   }
 
+  // Set timer
+  startTimer() {
+    let counter = 0;
+    setInterval(() => {
+      this.setState({
+        ...this.state,
+        timer: counter
+      });
+      counter++;
+    }, 1000);
+  }
+
+  // Reset game
+
   render() {
     let playerList = this.state.players;
     if (this.state.bigWin) {
@@ -370,19 +403,6 @@ class Board extends Component {
 
         // Set cell to be playerBig
         if (
-          playerList.playerBig &&
-          playerList.playerBig.coordinates.has(coord)
-        ) {
-          row.push(
-            <PlayerBig
-              key={coord}
-              backgroundColor={playerList.playerBig.color}
-              border={playerList.playerBig.border}
-            />
-          );
-        }
-        // Set cell to be playerSmall1
-        else if (
           playerList.playerSmall1 &&
           playerList.playerSmall1.coordinates.has(coord)
         ) {
@@ -406,7 +426,20 @@ class Board extends Component {
               border={playerList.playerSmall2.border}
             />
           );
+        } else if (
+          playerList.playerBig &&
+          playerList.playerBig.coordinates.has(coord)
+        ) {
+          row.push(
+            <PlayerBig
+              key={coord}
+              backgroundColor={playerList.playerBig.color}
+              border={playerList.playerBig.border}
+              image="silas.png"
+            />
+          );
         }
+        // Set cell to be playerSmall1
 
         // Set cell to be empty
         else {
@@ -426,11 +459,15 @@ class Board extends Component {
         <table className="Board">
           <tbody>{tblBoard}</tbody>
         </table>
+        <h1>{this.state.timer}</h1>
         {this.state.bigWin ? (
-          <h1>
-            You've been eaten by the{' '}
-            <span style={{ color: 'red' }}>BEAST!!!</span>
-          </h1>
+          <div>
+            <h1>
+              You've been eaten by the{' '}
+              <span style={{ color: 'red' }}>BEAST!!!</span>
+            </h1>
+            <button onClick={this.resetGame}>Start the Chase</button>
+          </div>
         ) : (
           undefined
         )}
