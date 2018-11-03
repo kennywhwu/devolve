@@ -1,0 +1,19 @@
+.Tiles-tileContainer {
+  display: inline-block;
+  border: 5px solid darkgray;
+  margin: auto;
+  width: 120px;
+}
+
+.Tiles-tile {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  border: 1px dotted blue;
+  width: 16px;
+  height: 16px;
+  transform: scale(3);
+  margin: auto;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
