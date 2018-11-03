@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import silas from './silas.png';
+// import silas from './silas.png';
 // import './PlayerBig.css';
 
 class PlayerBig extends Component {

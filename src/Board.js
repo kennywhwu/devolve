@@ -2,40 +2,15 @@ import React, { Component } from 'react';
 import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
-
-// Reference translation for key press to expected action
-const keyDict = {
-  a: { player: 'small1', type: 'movement', action: 'left' },
-  w: { player: 'small1', type: 'movement', action: 'up' },
-  d: { player: 'small1', type: 'movement', action: 'right' },
-  s: { player: 'small1', type: 'movement', action: 'down' },
-  g: { player: 'small2', type: 'movement', action: 'left' },
-  y: { player: 'small2', type: 'movement', action: 'up' },
-  j: { player: 'small2', type: 'movement', action: 'right' },
-  h: { player: 'small2', type: 'movement', action: 'down' },
-  ArrowLeft: {
-    player: 'big',
-    type: 'movement',
-    action: 'left'
-  },
-  ArrowUp: { player: 'big', type: 'movement', action: 'up' },
-  ArrowRight: {
-    player: 'big',
-    type: 'movement',
-    action: 'right'
-  },
-  ArrowDown: {
-    player: 'big',
-    type: 'movement',
-    action: 'down'
-  }
-};
+import keyDict from './keyDictionary';
 
 // Key for defining order of player colors
 const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
 // Border Size
 const BORDER_SIZE = 1;
+
+let setTimerFunction;
 
 // Board class
 
@@ -49,10 +24,6 @@ class Board extends Component {
       timer: 0
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
-    this.setPlayerPosition = this.setPlayerPosition.bind(this);
-    this.setPlayerCoordinates = this.setPlayerCoordinates.bind(this);
-    this.moveDelay = this.moveDelay.bind(this);
-    this.movePlayer = this.movePlayer.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
     this.startTimer();
   }
@@ -75,47 +46,55 @@ class Board extends Component {
   // Create list of player objects based on props fed into Board
   createPlayerList() {
     let playerList = {};
+    // Create playerBig object
     for (let i = 0; i < this.props.players.big; i++) {
+      // Initialize position/coordinates
+      const size = 6;
+      const position = this.setPlayerPosition(
+        BORDER_SIZE,
+        this.props.xDimension - size - BORDER_SIZE,
+        size
+      );
+      const coordinates = this.setPlayerCoordinates(size, position);
+
       let playerObj = {
         type: 'big',
         color: 'red',
         border: '2px solid black',
-        size: 7,
+        size,
         moveReady: true,
-        delay: 200
+        delay: 200,
+        // need to pass in created object to refer to the object that size is being called on
+        // already bound to class, so can't use this.size
+        // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
+        position,
+        coordinates
       };
-      playerObj.position = this.setPlayerPosition(
-        BORDER_SIZE,
-        this.props.xDimension - playerObj.size - BORDER_SIZE,
-        playerObj.size
-      );
-      playerObj.coordinates = this.setPlayerCoordinates(
-        playerObj.size,
-        playerObj.position
-      );
       playerList.playerBig = playerObj;
     }
+
+    // Create playerSmall objects
     for (let i = 0; i < this.props.players.small; i++) {
+      // Initialize position/coordinates
+      const size = 1;
+      let position = this.setPlayerPosition(
+        this.props.yDimension - size - i * size - BORDER_SIZE,
+        i * size + BORDER_SIZE,
+        size
+      );
+      const coordinates = this.setPlayerCoordinates(size, position);
+
       let playerObj = {
         type: 'small',
         color: playerColorKey[i],
         border: '2px solid black',
-        size: 1,
+        size,
         moveReady: true,
-        delay: 0
+        delay: 0,
+        position,
+        coordinates
       };
-      playerObj.position = this.setPlayerPosition(
-        this.props.yDimension -
-          playerObj.size -
-          i * playerObj.size -
-          BORDER_SIZE,
-        i * playerObj.size + BORDER_SIZE,
-        playerObj.size
-      );
-      playerObj.coordinates = this.setPlayerCoordinates(
-        playerObj.size,
-        playerObj.position
-      );
+
       playerList[`playerSmall${i + 1}`] = playerObj;
     }
     return playerList;
@@ -123,12 +102,14 @@ class Board extends Component {
 
   // Initialize creation and placement of playerBig
   setPlayerPosition(initialY, initialX, size) {
-    return Array.from({ length: size }).map((e1, i1) =>
+    let position = Array.from({ length: size }).map((e1, i1) =>
       Array.from({ length: size }).map((e2, i2) => ({
         y: initialY + i1,
         x: initialX + i2
       }))
     );
+
+    return position;
   }
 
   // Translate position object into string coordinate
@@ -278,13 +259,16 @@ class Board extends Component {
       // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
       // board[newY][newX] = 2;
       // board[y][x] = 0;
+      // playerNewPosition = position.map(e1 =>
+      //   e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
+      // );
       playerNewPosition = position.map(e1 =>
         e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
       );
     }
 
-    let playerBigCoord = playerList.playerBig.coordinates;
-    let playerSmall1Coord = playerList.playerSmall1.coordinates;
+    let playerBigCoord;
+    let playerSmall1Coord;
     let playerSmall2Coord;
 
     if (playerList.playerBig) {
@@ -314,7 +298,6 @@ class Board extends Component {
         );
       }
     }
-
     for (let item of playerBigCoord) {
       if (playerSmall2Coord === undefined) {
         if (playerSmall1Coord.has(item)) {
@@ -323,6 +306,10 @@ class Board extends Component {
       } else if (playerSmall1Coord.has(item) || playerSmall2Coord.has(item)) {
         bigWin = true;
       }
+    }
+
+    if (bigWin === true) {
+      this.stopTimer();
     }
 
     // Set changedState object based on player, to later set state
@@ -338,10 +325,10 @@ class Board extends Component {
               playerList.playerBig.size,
               playerNewPosition
             )
-          }
-        },
-        board,
-        bigWin
+          },
+          board,
+          bigWin
+        }
       };
     } else if (player === 'small1') {
       changedState = {
@@ -384,17 +371,21 @@ class Board extends Component {
   // Set timer
   startTimer() {
     let counter = 0;
-    setInterval(() => {
+    setTimerFunction = setInterval(() => {
       this.setState({
-        ...this.state,
         timer: counter
       });
       counter++;
     }, 1000);
   }
 
+  stopTimer() {
+    clearInterval(setTimerFunction);
+  }
+  // this.state.bigWin === true
+
   // Reset game
-  resetGame() {}
+  // resetGame() {}
 
   render() {
     let playerList = this.state.players;
@@ -443,7 +434,6 @@ class Board extends Component {
               key={coord}
               backgroundColor={playerList.playerBig.color}
               border={playerList.playerBig.border}
-              image="silas.png"
             />
           );
         }
