@@ -135,106 +135,74 @@ class Board extends Component {
 
   // Set delay on player movement
   async moveDelay(player, direction) {
-    if (player === 'small1') {
-      if (this.state.players.playerSmall1.moveReady) {
-        this.setState(st => ({
-          players: {
-            ...st.players,
-            playerSmall1: {
-              ...st.players.playerSmall1,
-              moveReady: !st.players.playerSmall1.moveReady
-            }
+    let setReadyState = function(st) {
+      return {
+        players: {
+          ...st.players,
+          player: {
+            ...st.players.player,
+            moveReady: !st.players[`${player}`].moveReady
           }
-        }));
-        await setTimeout(() => {
-          this.setState(st => ({
-            players: {
-              ...st.players,
-              playerSmall1: {
-                ...st.players.playerSmall1,
-                moveReady: !st.players.playerSmall1.moveReady
-              }
-            }
-          }));
-          this.movePlayer(player, direction);
-        }, this.state.players.playerSmall1.delay);
-      }
-    } else if (player === 'small2') {
-      if (this.state.players.playerSmall2.moveReady) {
-        this.setState(st => ({
-          players: {
-            ...st.players,
-            playerSmall1: {
-              ...st.players.playerSmall1,
-              moveReady: !st.players.playerSmall1.moveReady
-            }
-          }
-        }));
-        await setTimeout(() => {
-          this.setState(st => ({
-            players: {
-              ...st.players,
-              playerSmall1: {
-                ...st.players.playerSmall1,
-                moveReady: !st.players.playerSmall1.moveReady
-              }
-            }
-          }));
-          this.movePlayer(player, direction);
-        }, this.state.players.playerSmall1.delay);
-      }
-    } else if (player === 'big') {
-      if (this.state.players.playerBig.moveReady) {
-        this.setState(st => ({
-          players: {
-            ...st.players,
-            playerBig: {
-              ...st.players.playerBig,
-              moveReady: !st.players.playerBig.moveReady
-            }
-          }
-        }));
-        await setTimeout(() => {
-          this.setState(st => ({
-            players: {
-              ...st.players,
-              playerBig: {
-                ...st.players.playerBig,
-                moveReady: !st.players.playerBig.moveReady
-              }
-            }
-          }));
-          this.movePlayer(player, direction);
-        }, this.state.players.playerBig.delay);
-      }
-    }
+        }
+      };
+    };
+
+    // if (player === 'small1') {
+    // if (this.state.players[`${player}`].moveReady) {
+    this.setState(st => setReadyState(st));
+    await setTimeout(() => {
+      this.setState(st => setReadyState(st));
+      this.movePlayer(player, direction);
+    }, this.state.players.playerSmall1.delay);
+    // }
+    // } else if (player === 'small2') {
+    //   if (this.state.players.playerSmall2.moveReady) {
+    //     this.setState(st => setReadyState(st));
+    //     await setTimeout(() => {
+    //       this.setState(st => setReadyState(st));
+    //       this.movePlayer(player, direction);
+    //     }, this.state.players.playerSmall1.delay);
+    //   }
+    // } else if (player === 'big') {
+    //   if (this.state.players.playerBig.moveReady) {
+    //     this.setState(st => setReadyState(st));
+    //     await setTimeout(() => {
+    //       this.setState(st => setReadyState(st));
+    //       this.movePlayer(player, direction);
+    //     }, this.state.players.playerBig.delay);
+    //   }
+    // }
   }
 
   // movement based on direction pressed
   // 'up' moves player [y-1, 0]
   movePlayer(player, direction) {
     // Initialize board and input states
-    let yChange = 0;
-    let xChange = 0;
+    let yChange;
+    let xChange;
     let board = this.state.board;
     let bigWin = this.state.bigWin;
     let playerList = this.state.players;
-    let position;
-    let size;
-    let playerNewPosition;
-    if (player === 'big') {
-      position = playerList.playerBig.position;
-      size = playerList.playerBig.size;
-      playerNewPosition = playerList.playerBig.position;
-    } else if (player === 'small1') {
-      position = playerList.playerSmall1.position;
-      size = playerList.playerSmall1.size;
-      playerNewPosition = playerList.playerSmall1.position;
-    } else if (player === 'small2') {
-      position = playerList.playerSmall2.position;
-      size = playerList.playerSmall2.size;
-      playerNewPosition = playerList.playerSmall2.position;
-    }
+    let position = playerList[`${player}`].position;
+    let size = playerList[`${player}`].size;
+    let playerNewPosition = playerList[`${player}`].position;
+
+    // let position;
+    // let size;
+    // let playerNewPosition;
+    // if (player === 'big') {
+    //   position = playerList.playerBig.position;
+    //   size = playerList.playerBig.size;
+    //   playerNewPosition = playerList.playerBig.position;
+    // } else if (player === 'small1') {
+    //   position = playerList.playerSmall1.position;
+    //   size = playerList.playerSmall1.size;
+    //   playerNewPosition = playerList.playerSmall1.position;
+    // } else if (player === 'small2') {
+    //   position = playerList.playerSmall2.position;
+    //   size = playerList.playerSmall2.size;
+    //   playerNewPosition = playerList.playerSmall2.position;
+    // }
 
     // Translate directions into y-x coordinate changes
     if (direction === 'up') {
@@ -266,45 +234,76 @@ class Board extends Component {
         e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
       );
     }
+    console.log(minCorner);
 
-    let playerBigCoord;
-    let playerSmall1Coord;
-    let playerSmall2Coord;
+    // let playerCoord = this.setPlayerCoordinates(
+    //   playerList[`${player}`].size,
+    //   playerNewPosition
+    // );
 
-    if (playerList.playerBig) {
-      playerBigCoord = playerList.playerBig.coordinates;
-      if (player === 'big') {
-        playerBigCoord = this.setPlayerCoordinates(
-          playerList.playerBig.size,
-          playerNewPosition
-        );
-      }
+    // if (playerList.playerBig) {
+    //   playerBigCoord = playerList.playerBig.coordinates;
+    //   if (player === 'big') {
+    //     playerBigCoord = this.setPlayerCoordinates(
+    //       playerList.playerBig.size,
+    //       playerNewPosition
+    //     );
+    //   }
+    // }
+    // if (playerList.playerSmall1) {
+    //   playerSmall1Coord = playerList.playerSmall1.coordinates;
+    //   if (player === 'small1') {
+    //     playerSmall1Coord = this.setPlayerCoordinates(
+    //       playerList.playerSmall1.size,
+    //       playerNewPosition
+    //     );
+    //   }
+    // }
+    // if (playerList.playerSmall2) {
+    //   playerSmall2Coord = playerList.playerSmall2.coordinates;
+    //   if (player === 'small2') {
+    //     playerSmall2Coord = this.setPlayerCoordinates(
+    //       playerList.playerSmall2.size,
+    //       playerNewPosition
+    //     );
+    //   }
+    // }
+
+    let playerCoord = {};
+    for (let key in playerList) {
+      playerCoord[key] = playerList[key].coordinates;
     }
-    if (playerList.playerSmall1) {
-      playerSmall1Coord = playerList.playerSmall1.coordinates;
-      if (player === 'small1') {
-        playerSmall1Coord = this.setPlayerCoordinates(
-          playerList.playerSmall1.size,
-          playerNewPosition
-        );
-      }
-    }
-    if (playerList.playerSmall2) {
-      playerSmall2Coord = playerList.playerSmall2.coordinates;
-      if (player === 'small2') {
-        playerSmall2Coord = this.setPlayerCoordinates(
-          playerList.playerSmall2.size,
-          playerNewPosition
-        );
-      }
-    }
-    for (let item of playerBigCoord) {
-      if (playerSmall2Coord === undefined) {
-        if (playerSmall1Coord.has(item)) {
+    playerCoord[`${player}`].coordinates = this.setPlayerCoordinates(
+      playerList[`${player}`].size,
+      playerNewPosition
+    );
+
+    // let playerBigCoord = playerList.playerBig.coordinates;
+    // let playerSmall1Coord = playerList.playerSmall1.coordinates;
+    // let playerSmall2Coord;
+    // if (playerList.playerSmall2 !== undefined) {
+    //   playerSmall2Coord = playerList.playerSmall2.coordinates;
+    // }
+    // playerList[`${player}`].coordinates = this.setPlayerCoordinates(
+    //   playerList[`${player}`].size,
+    //   playerNewPosition
+    // );
+
+    if (player !== 'playerBig') {
+      for (let item of playerCoord.playerBig) {
+        if (playerCoord[`${player}`].has(item)) {
           bigWin = true;
         }
-      } else if (playerSmall1Coord.has(item) || playerSmall2Coord.has(item)) {
-        bigWin = true;
+      }
+    } else {
+      for (let playercoord in playerCoord) {
+        if (playercoord !== 'playerBig') {
+          for (let item of playerCoord.playercoord) {
+            if (playerCoord.playerBig.has(item)) {
+              bigWin = true;
+            }
+          }
+        }
       }
     }
 
@@ -408,6 +407,7 @@ class Board extends Component {
           row.push(
             <PlayerSmall
               key={coord}
+              id={coord}
               backgroundColor={playerList.playerSmall1.color}
               border={playerList.playerSmall1.border}
             />
@@ -421,6 +421,7 @@ class Board extends Component {
           row.push(
             <PlayerSmall
               key={coord}
+              id={coord}
               backgroundColor={playerList.playerSmall2.color}
               border={playerList.playerSmall2.border}
             />
@@ -432,6 +433,7 @@ class Board extends Component {
           row.push(
             <PlayerBig
               key={coord}
+              id={coord}
               backgroundColor={playerList.playerBig.color}
               border={playerList.playerBig.border}
             />
@@ -448,19 +450,19 @@ class Board extends Component {
             <td
               className="cell"
               key={coord}
-              coord={coord}
+              id={coord}
               style={{ backgroundColor: 'gray' }}
             />
           );
         }
         // Set cell to be empty
         else {
-          row.push(<td className="cell" key={coord} coord={coord} />);
+          row.push(<td className="cell" id={coord} coord={coord} />);
         }
       }
 
       tblBoard.push(
-        <tr key={y} row={y}>
+        <tr id={y} row={y}>
           {row}
         </tr>
       );
