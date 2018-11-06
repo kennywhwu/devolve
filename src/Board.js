@@ -67,7 +67,7 @@ class Board extends Component {
         border: '2px solid black',
         size,
         moveReady: true,
-        delay: 200,
+        delay: 500,
         // need to pass in created object to refer to the object that size is being called on
         // already bound to class, so can't use this.size
         // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
@@ -156,32 +156,33 @@ class Board extends Component {
       };
     };
 
-    // if (player === 'small1') {
-    // if (this.state.players[`${player}`].moveReady) {
-    this.setState(st => setReadyState(st));
-    await setTimeout(() => {
+    if (this.state.players[`${player}`].moveReady) {
       this.setState(st => setReadyState(st));
-      this.movePlayer(player, direction);
-    }, this.state.players[`${player}`].delay);
-    // }
-    // } else if (player === 'small2') {
-    //   if (this.state.players.playerSmall2.moveReady) {
-    //     this.setState(st => setReadyState(st));
-    //     await setTimeout(() => {
-    //       this.setState(st => setReadyState(st));
-    //       this.movePlayer(player, direction);
-    //     }, this.state.players.playerSmall1.delay);
-    //   }
-    // } else if (player === 'big') {
-    //   if (this.state.players.playerBig.moveReady) {
-    //     this.setState(st => setReadyState(st));
-    //     await setTimeout(() => {
-    //       this.setState(st => setReadyState(st));
-    //       this.movePlayer(player, direction);
-    //     }, this.state.players.playerBig.delay);
-    //   }
-    // }
+      await setTimeout(() => {
+        this.setState(st => setReadyState(st));
+        this.movePlayer(player, direction);
+      }, this.state.players[`${player}`].delay);
+    }
   }
+
+  //   } else if (player === 'small2') {
+  //     if (this.state.players.playerSmall2.moveReady) {
+  //       this.setState(st => setReadyState(st));
+  //       await setTimeout(() => {
+  //         this.setState(st => setReadyState(st));
+  //         this.movePlayer(player, direction);
+  //       }, this.state.players.playerSmall1.delay);
+  //     }
+  //   } else if (player === 'big') {
+  //     if (this.state.players.playerBig.moveReady) {
+  //       this.setState(st => setReadyState(st));
+  //       await setTimeout(() => {
+  //         this.setState(st => setReadyState(st));
+  //         this.movePlayer(player, direction);
+  //       }, this.state.players.playerBig.delay);
+  //     }
+  //   }
+  // }
 
   // movement based on direction pressed
   // 'up' moves player [y-1, 0]
