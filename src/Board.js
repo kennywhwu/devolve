@@ -19,7 +19,7 @@ const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
 // Constant game factors
 const BORDER_SIZE = 1;
-const GROWTH_RATE = 2;
+const GROWTH_RATE = 0;
 
 let setTimerFunction;
 
@@ -31,6 +31,7 @@ class Board extends Component {
     this.state = {
       board: this.createBoard(),
       players: this.createPlayerList(),
+      eatenPlayers: [],
       bigWin: false,
       timer: 0,
       firstKeyPress: false
@@ -152,7 +153,7 @@ class Board extends Component {
   // Call action based on keypress
   registerKeyPress(evt) {
     let keyDef = keyDict[evt.key.toString()];
-    if (keyDef !== undefined) {
+    if (keyDef !== undefined && keyDef.player in this.state.players) {
       if (keyDef.type === 'movement') {
         this.moveDelay(keyDef.player, keyDef.action);
       }
@@ -295,7 +296,8 @@ class Board extends Component {
     // Change state
     this.setState(changedState);
 
-    // Check for win
+    // Check for eaten/win conditions
+    this.checkEaten();
     this.checkWin();
   }
 
@@ -394,18 +396,30 @@ class Board extends Component {
     return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
   }
 
-  // Check win conditions
-  checkWin() {
+  // Check player eaten
+  checkEaten() {
     const playerList = this.state.players;
     for (let player in playerList) {
       if (player !== 'playerBig') {
         for (let item of playerList.playerBig.coordinates) {
-          if (playerList[player].coordinates.has(item)) {
-            this.setState({ bigWin: true });
-            this.stopGame();
+          if (playerList[player] && playerList[player].coordinates.has(item)) {
+            let color = playerList[player].color;
+            delete playerList[player];
+            this.setState(st => ({
+              players: playerList,
+              eatenPlayers: [...st.eatenPlayers, { player, color }]
+            }));
           }
         }
       }
+    }
+  }
+
+  // Check win conditions
+  checkWin() {
+    if (Object.keys(this.state.players).length === 1) {
+      this.setState({ bigWin: true });
+      this.stopGame();
     }
   }
 
@@ -425,6 +439,7 @@ class Board extends Component {
     let defaultState = {
       board: this.createBoard(),
       players: this.createPlayerList(),
+      eatenPlayers: [],
       bigWin: false,
       timer: 0,
       firstKeyPress: false
@@ -517,9 +532,17 @@ class Board extends Component {
           <tbody>{tblBoard}</tbody>
         </table>
         <h1>{this.state.timer}</h1>
+
+        {this.state.eatenPlayers.map(e => (
+          <h2 key={e.color}>
+            <span style={{ color: e.color }}>{e.color.toUpperCase()}</span> has
+            been eaten by the <span style={{ color: 'red' }}>BEAST!!!</span>
+          </h2>
+        ))}
+
         {this.state.bigWin ? (
           <h1>
-            You've been eaten by the{' '}
+            You've ALLLL been eaten by the{' '}
             <span style={{ color: 'red' }}>BEAST!!!</span>
           </h1>
         ) : (
