@@ -21,14 +21,14 @@ class Board extends Component {
       board: this.createBoard(),
       players: this.createPlayerList(),
       bigWin: false,
-      timer: 0
+      timer: 0,
+      firstKeyPress: false
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
     this.resetGame = this.resetGame.bind(this);
     // this.createBoard = this.createBoard.bind(this);
     // this.createPlayerList = this.createPlayerList.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
-    this.startTimer();
   }
 
   static defaultProps = {
@@ -135,6 +135,10 @@ class Board extends Component {
       if (keyDef.type === 'movement') {
         this.moveDelay(keyDef.player, keyDef.action);
       }
+    }
+    if (!this.state.firstKeyPress) {
+      this.setState({ firstKeyPress: true });
+      this.startTimer();
     }
   }
 
@@ -339,7 +343,7 @@ class Board extends Component {
 
   // Set timer
   startTimer() {
-    let counter = 0;
+    let counter = 1;
     setTimerFunction = setInterval(() => {
       this.setState({
         timer: counter
@@ -359,11 +363,11 @@ class Board extends Component {
       board: this.createBoard(),
       players: this.createPlayerList(),
       bigWin: false,
-      timer: 0
+      timer: 0,
+      firstKeyPress: false
     };
     this.setState(defaultState);
     window.document.addEventListener('keydown', this.registerKeyPress);
-    this.startTimer();
   }
 
   render() {
