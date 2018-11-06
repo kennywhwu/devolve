@@ -26,8 +26,6 @@ class Board extends Component {
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
     this.resetGame = this.resetGame.bind(this);
-    // this.createBoard = this.createBoard.bind(this);
-    // this.createPlayerList = this.createPlayerList.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
   }
 
@@ -58,7 +56,6 @@ class Board extends Component {
         this.props.xDimension - size - BORDER_SIZE,
         size
       );
-
       const coordinates = this.setPlayerCoordinates(size, position);
 
       let playerObj = {
@@ -67,7 +64,7 @@ class Board extends Component {
         border: '2px solid black',
         size,
         moveReady: true,
-        delay: 500,
+        delay: 200,
         // need to pass in created object to refer to the object that size is being called on
         // already bound to class, so can't use this.size
         // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
@@ -98,7 +95,6 @@ class Board extends Component {
         position,
         coordinates
       };
-
       playerList[`playerSmall${i + 1}`] = playerObj;
     }
     return playerList;
@@ -149,40 +145,21 @@ class Board extends Component {
         players: {
           ...st.players,
           [player]: {
-            ...st.players[`${player}`],
-            moveReady: !st.players[`${player}`].moveReady
+            ...st.players[player],
+            moveReady: !st.players[player].moveReady
           }
         }
       };
     };
 
-    if (this.state.players[`${player}`].moveReady) {
+    if (this.state.players[player].moveReady) {
       this.setState(st => setReadyState(st));
       await setTimeout(() => {
         this.setState(st => setReadyState(st));
         this.movePlayer(player, direction);
-      }, this.state.players[`${player}`].delay);
+      }, this.state.players[player].delay);
     }
   }
-
-  //   } else if (player === 'small2') {
-  //     if (this.state.players.playerSmall2.moveReady) {
-  //       this.setState(st => setReadyState(st));
-  //       await setTimeout(() => {
-  //         this.setState(st => setReadyState(st));
-  //         this.movePlayer(player, direction);
-  //       }, this.state.players.playerSmall1.delay);
-  //     }
-  //   } else if (player === 'big') {
-  //     if (this.state.players.playerBig.moveReady) {
-  //       this.setState(st => setReadyState(st));
-  //       await setTimeout(() => {
-  //         this.setState(st => setReadyState(st));
-  //         this.movePlayer(player, direction);
-  //       }, this.state.players.playerBig.delay);
-  //     }
-  //   }
-  // }
 
   // movement based on direction pressed
   // 'up' moves player [y-1, 0]
@@ -193,27 +170,9 @@ class Board extends Component {
     let board = this.state.board;
     let bigWin = this.state.bigWin;
     let playerList = this.state.players;
-    let position = playerList[`${player}`].position;
-    let size = playerList[`${player}`].size;
-    let playerNewPosition = playerList[`${player}`].position;
-    // let playerNewPosition = playerList[`${player}`].position;
-
-    // let position;
-    // let size;
-    // let playerNewPosition;
-    // if (player === 'big') {
-    //   position = playerList.playerBig.position;
-    //   size = playerList.playerBig.size;
-    //   playerNewPosition = playerList.playerBig.position;
-    // } else if (player === 'small1') {
-    //   position = playerList.playerSmall1.position;
-    //   size = playerList.playerSmall1.size;
-    //   playerNewPosition = playerList.playerSmall1.position;
-    // } else if (player === 'small2') {
-    //   position = playerList.playerSmall2.position;
-    //   size = playerList.playerSmall2.size;
-    //   playerNewPosition = playerList.playerSmall2.position;
-    // }
+    let position = playerList[player].position;
+    let size = playerList[player].size;
+    let playerNewPosition = playerList[player].position;
 
     // Translate directions into y-x coordinate changes
     if (direction === 'up') {
@@ -239,86 +198,45 @@ class Board extends Component {
       // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
       // board[newY][newX] = 2;
       // board[y][x] = 0;
-      // playerNewPosition = position.map(e1 =>
-      //   e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
-      // );
+
       playerNewPosition = position.map(e1 =>
         e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
       );
     }
 
-    // let playerCoord = this.setPlayerCoordinates(
-    //   playerList[`${player}`].size,
-    //   playerNewPosition
-    // );
-
-    // if (playerList.playerBig) {
-    //   playerBigCoord = playerList.playerBig.coordinates;
-    //   if (player === 'big') {
-    //     playerBigCoord = this.setPlayerCoordinates(
-    //       playerList.playerBig.size,
-    //       playerNewPosition
-    //     );
-    //   }
-    // }
-    // if (playerList.playerSmall1) {
-    //   playerSmall1Coord = playerList.playerSmall1.coordinates;
-    //   if (player === 'small1') {
-    //     playerSmall1Coord = this.setPlayerCoordinates(
-    //       playerList.playerSmall1.size,
-    //       playerNewPosition
-    //     );
-    //   }
-    // }
-    // if (playerList.playerSmall2) {
-    //   playerSmall2Coord = playerList.playerSmall2.coordinates;
-    //   if (player === 'small2') {
-    //     playerSmall2Coord = this.setPlayerCoordinates(
-    //       playerList.playerSmall2.size,
-    //       playerNewPosition
-    //     );
-    //   }
-    // }
-
-    let playerCoord = {};
+    // Setting cooordinate object to hold existing players' coordinates
+    let coordObj = {};
     for (let key in playerList) {
-      playerCoord[key] = playerList[key].coordinates;
+      coordObj[key] = playerList[key].coordinates;
     }
-    playerCoord[`${player}`] = this.setPlayerCoordinates(
-      playerList[`${player}`].size,
+    coordObj[player] = this.setPlayerCoordinates(
+      playerList[player].size,
       playerNewPosition
     );
 
-    // let playerBigCoord = playerList.playerBig.coordinates;
-    // let playerSmall1Coord = playerList.playerSmall1.coordinates;
-    // let playerSmall2Coord;
-    // if (playerList.playerSmall2 !== undefined) {
-    //   playerSmall2Coord = playerList.playerSmall2.coordinates;
-    // }
-    // playerList[`${player}`].coordinates = this.setPlayerCoordinates(
-    //   playerList[`${player}`].size,
-    //   playerNewPosition
-    // );
-
+    // Check win conditions
     if (player !== 'playerBig') {
-      for (let item of playerCoord.playerBig) {
-        if (playerCoord[`${player}`].has(item)) {
+      for (let item of coordObj.playerBig) {
+        if (coordObj[player].has(item)) {
           bigWin = true;
         }
       }
     } else {
-      for (let playercoord in playerCoord) {
+      for (let playercoord in coordObj) {
         if (playercoord !== 'playerBig') {
-          for (let item of playerCoord[`${playercoord}`]) {
-            if (playerCoord.playerBig.has(item)) {
+          for (let item of coordObj[`${playercoord}`]) {
+            if (coordObj.playerBig.has(item)) {
               bigWin = true;
             }
           }
         }
       }
     }
+
+    // Stop timer if win conditions met
     if (bigWin === true) {
       this.stopTimer();
+      window.document.removeEventListener('keydown', this.registerKeyPress);
     }
 
     // Set changedState object based on player, to later set state
@@ -326,10 +244,10 @@ class Board extends Component {
       players: {
         ...playerList,
         [player]: {
-          ...playerList[`${player}`],
+          ...playerList[player],
           position: playerNewPosition,
           coordinates: this.setPlayerCoordinates(
-            playerList[`${player}`].size,
+            playerList[player].size,
             playerNewPosition
           )
         }
@@ -353,10 +271,10 @@ class Board extends Component {
     }, 1000);
   }
 
+  // Stop timer
   stopTimer() {
     clearInterval(setTimerFunction);
   }
-  // this.state.bigWin === true
 
   // Reset game
   resetGame() {
@@ -373,9 +291,6 @@ class Board extends Component {
 
   render() {
     let playerList = this.state.players;
-    if (this.state.bigWin) {
-      window.document.removeEventListener('keydown', this.registerKeyPress);
-    }
 
     // Loop through array of arrays to create board with HTML based on coordinates
     let tblBoard = [];
@@ -384,37 +299,26 @@ class Board extends Component {
       for (let x = 0; x < this.props.xDimension; x++) {
         let coord = `${y}-${x}`;
 
-        // Set cell to be playerBig
-        if (
-          playerList.playerSmall1 &&
-          playerList.playerSmall1.coordinates.has(coord)
-        ) {
-          row.push(
-            <PlayerSmall
-              key={coord}
-              id={coord}
-              backgroundColor={playerList.playerSmall1.color}
-              border={playerList.playerSmall1.border}
-            />
-          );
+        // Using pushed variable is janky; FIX THIS
+        let pushed = false;
+        let { playerBig, ...smallPlayers } = playerList;
+
+        // Set cell to be specific playerSmall
+        for (let player in smallPlayers) {
+          if (playerList[player].coordinates.has(coord) && pushed === false) {
+            row.push(
+              <PlayerSmall
+                key={coord}
+                id={coord}
+                backgroundColor={playerList[player].color}
+                border={playerList[player].border}
+              />
+            );
+            pushed = true;
+          }
         }
-        // Set cell to be playerSmall2
-        else if (
-          playerList.playerSmall2 &&
-          playerList.playerSmall2.coordinates.has(coord)
-        ) {
-          row.push(
-            <PlayerSmall
-              key={coord}
-              id={coord}
-              backgroundColor={playerList.playerSmall2.color}
-              border={playerList.playerSmall2.border}
-            />
-          );
-        } else if (
-          playerList.playerBig &&
-          playerList.playerBig.coordinates.has(coord)
-        ) {
+        // Set cell to be playerBig
+        if (playerBig.coordinates.has(coord) && pushed === false) {
           row.push(
             <PlayerBig
               key={coord}
@@ -423,26 +327,30 @@ class Board extends Component {
               border={playerList.playerBig.border}
             />
           );
+          pushed = true;
         }
-        // Set cell to be playerSmall1
-        else if (
-          y === 0 ||
-          x === 0 ||
-          y === this.props.yDimension - BORDER_SIZE ||
-          x === this.props.xDimension - BORDER_SIZE
-        ) {
-          row.push(
-            <td
-              className="cell"
-              key={coord}
-              id={coord}
-              style={{ backgroundColor: 'gray' }}
-            />
-          );
-        }
-        // Set cell to be empty
-        else {
-          row.push(<td className="cell" id={coord} coord={coord} />);
+
+        if (!pushed) {
+          // Set cell to be border
+          if (
+            y === 0 ||
+            x === 0 ||
+            y === this.props.yDimension - BORDER_SIZE ||
+            x === this.props.xDimension - BORDER_SIZE
+          ) {
+            row.push(
+              <td
+                className="cell"
+                key={coord}
+                id={coord}
+                style={{ backgroundColor: 'gray' }}
+              />
+            );
+          }
+          // Set cell to be empty
+          else {
+            row.push(<td className="cell" id={coord} coord={coord} />);
+          }
         }
       }
 
