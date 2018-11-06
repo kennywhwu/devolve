@@ -1,15 +1,25 @@
+/* BOARD COMPONENT */
+
+///////////////
+/// IMPORTS ///
+///////////////
+
 import React, { Component } from 'react';
 import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
 import keyDict from './keyDictionary';
 
+/////////////////
+/// CONSTANTS ///
+/////////////////
+
 // Key for defining order of player colors
 const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
 // Constant game factors
 const BORDER_SIZE = 1;
-const GROWTH_RATE = 1;
+const GROWTH_RATE = 2;
 
 let setTimerFunction;
 
@@ -36,6 +46,10 @@ class Board extends Component {
     xDimension: 15,
     yDimension: 15
   };
+
+  ///////////////////////
+  /// INITIALIZE GAME ///
+  ///////////////////////
 
   // Initialize board populated with 0's based on provided dimensions
   createBoard() {
@@ -103,6 +117,10 @@ class Board extends Component {
     return playerList;
   }
 
+  /////////////////////
+  /// SET PLACEMENT ///
+  /////////////////////
+
   // Initialize creation and placement of playerBig
   setPlayerPosition(initialY, initialX, size) {
     let position = Array.from({ length: size }).map((e1, i1) =>
@@ -127,6 +145,10 @@ class Board extends Component {
     return coord;
   }
 
+  ////////////////
+  /// KEYPRESS ///
+  ////////////////
+
   // Call action based on keypress
   registerKeyPress(evt) {
     let keyDef = keyDict[evt.key.toString()];
@@ -140,6 +162,10 @@ class Board extends Component {
       this.startTimer();
     }
   }
+
+  ////////////////
+  /// MOVEMENT ///
+  ////////////////
 
   // Set delay on player movement
   async moveDelay(player, direction) {
@@ -273,30 +299,9 @@ class Board extends Component {
     this.checkWin();
   }
 
-  // Check position if crossing border bounds
-  checkAllBounds(xMin, xMax, yMin, yMax) {
-    if (
-      this.checkXMinBounds(xMin) &&
-      this.checkYMinBounds(yMin) &&
-      this.checkXMaxBounds(xMax) &&
-      this.checkXMaxBounds(yMax)
-    ) {
-      return true;
-    }
-    return false;
-  }
-  checkXMinBounds(xMin) {
-    return xMin >= BORDER_SIZE ? true : false;
-  }
-  checkYMinBounds(yMin) {
-    return yMin >= BORDER_SIZE ? true : false;
-  }
-  checkXMaxBounds(xMax) {
-    return xMax < this.props.xDimension - BORDER_SIZE ? true : false;
-  }
-  checkYMaxBounds(yMax) {
-    return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
-  }
+  ////////////////////
+  /// TIMER/GROWTH ///
+  ////////////////////
 
   // Set timer/growth rate
   startTimer() {
@@ -355,6 +360,40 @@ class Board extends Component {
     }, 1000);
   }
 
+  // Stop timer
+  stopTimer() {
+    clearInterval(setTimerFunction);
+  }
+
+  ////////////////////////
+  /// CHECK CONDITIONS ///
+  ////////////////////////
+
+  // Check position if crossing border bounds
+  checkAllBounds(xMin, xMax, yMin, yMax) {
+    if (
+      this.checkXMinBounds(xMin) &&
+      this.checkYMinBounds(yMin) &&
+      this.checkXMaxBounds(xMax) &&
+      this.checkXMaxBounds(yMax)
+    ) {
+      return true;
+    }
+    return false;
+  }
+  checkXMinBounds(xMin) {
+    return xMin >= BORDER_SIZE ? true : false;
+  }
+  checkYMinBounds(yMin) {
+    return yMin >= BORDER_SIZE ? true : false;
+  }
+  checkXMaxBounds(xMax) {
+    return xMax < this.props.xDimension - BORDER_SIZE ? true : false;
+  }
+  checkYMaxBounds(yMax) {
+    return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
+  }
+
   // Check win conditions
   checkWin() {
     const playerList = this.state.players;
@@ -370,10 +409,9 @@ class Board extends Component {
     }
   }
 
-  // Stop timer
-  stopTimer() {
-    clearInterval(setTimerFunction);
-  }
+  /////////////////////////
+  /// GAME OVER ACTIONS ///
+  /////////////////////////
 
   // Stop game
   stopGame() {
@@ -394,6 +432,10 @@ class Board extends Component {
     this.setState(defaultState);
     window.document.addEventListener('keydown', this.registerKeyPress);
   }
+
+  //////////////
+  /// RENDER ///
+  //////////////
 
   render() {
     let playerList = this.state.players;
