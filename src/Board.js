@@ -7,8 +7,9 @@ import keyDict from './keyDictionary';
 // Key for defining order of player colors
 const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
-// Border Size
+// Constant game factors
 const BORDER_SIZE = 1;
+const GROWTH_RATE = 1;
 
 let setTimerFunction;
 
@@ -25,7 +26,9 @@ class Board extends Component {
       firstKeyPress: false
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
+    this.stopGame = this.stopGame.bind(this);
     this.resetGame = this.resetGame.bind(this);
+    this.setPlayerPosition = this.setPlayerPosition.bind(this);
     window.document.addEventListener('keydown', this.registerKeyPress);
   }
 
@@ -189,16 +192,29 @@ class Board extends Component {
     let minCorner = position[0][0];
     let maxCorner = position[size - 1][size - 1];
 
-    if (
-      minCorner.x + xChange >= BORDER_SIZE &&
-      maxCorner.x + xChange < this.props.xDimension - BORDER_SIZE &&
-      minCorner.y + yChange >= BORDER_SIZE &&
-      maxCorner.y + yChange < this.props.yDimension - BORDER_SIZE
-    ) {
-      // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
-      // board[newY][newX] = 2;
-      // board[y][x] = 0;
+    // if (
+    //   minCorner.x + xChange >= BORDER_SIZE &&
+    //   maxCorner.x + xChange < this.props.xDimension - BORDER_SIZE &&
+    //   minCorner.y + yChange >= BORDER_SIZE &&
+    //   maxCorner.y + yChange < this.props.yDimension - BORDER_SIZE
+    // ) {
+    //   // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
+    //   // board[newY][newX] = 2;
+    //   // board[y][x] = 0;
 
+    //   playerNewPosition = position.map(e1 =>
+    //     e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
+    //   );
+    // }
+
+    if (
+      this.checkAllBounds(
+        minCorner.x + xChange,
+        maxCorner.x + xChange,
+        minCorner.y + yChange,
+        maxCorner.y + yChange
+      )
+    ) {
       playerNewPosition = position.map(e1 =>
         e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
       );
@@ -214,30 +230,24 @@ class Board extends Component {
       playerNewPosition
     );
 
-    // Check win conditions
-    if (player !== 'playerBig') {
-      for (let item of coordObj.playerBig) {
-        if (coordObj[player].has(item)) {
-          bigWin = true;
-        }
-      }
-    } else {
-      for (let playercoord in coordObj) {
-        if (playercoord !== 'playerBig') {
-          for (let item of coordObj[`${playercoord}`]) {
-            if (coordObj.playerBig.has(item)) {
-              bigWin = true;
-            }
-          }
-        }
-      }
-    }
-
-    // Stop timer if win conditions met
-    if (bigWin === true) {
-      this.stopTimer();
-      window.document.removeEventListener('keydown', this.registerKeyPress);
-    }
+    // // Check win conditions
+    // if (player !== 'playerBig') {
+    //   for (let item of coordObj.playerBig) {
+    //     if (coordObj[player].has(item)) {
+    //       bigWin = true;
+    //     }
+    //   }
+    // } else {
+    //   for (let playercoord in coordObj) {
+    //     if (playercoord !== 'playerBig') {
+    //       for (let item of coordObj[`${playercoord}`]) {
+    //         if (coordObj.playerBig.has(item)) {
+    //           bigWin = true;
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     // Set changedState object based on player, to later set state
     let changedState = {
@@ -258,38 +268,80 @@ class Board extends Component {
 
     // Change state
     this.setState(changedState);
+
+    // Check for win
+    this.checkWin();
   }
 
-  // Set timer
+  // Check position if crossing border bounds
+  checkAllBounds(xMin, xMax, yMin, yMax) {
+    if (
+      this.checkXMinBounds(xMin) &&
+      this.checkYMinBounds(yMin) &&
+      this.checkXMaxBounds(xMax) &&
+      this.checkXMaxBounds(yMax)
+    ) {
+      return true;
+    }
+    return false;
+  }
+  checkXMinBounds(xMin) {
+    return xMin >= BORDER_SIZE ? true : false;
+  }
+  checkYMinBounds(yMin) {
+    return yMin >= BORDER_SIZE ? true : false;
+  }
+  checkXMaxBounds(xMax) {
+    return xMax < this.props.xDimension - BORDER_SIZE ? true : false;
+  }
+  checkYMaxBounds(yMax) {
+    return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
+  }
+
+  // Set timer/growth rate
   startTimer() {
     let counter = 1;
-    setTimerFunction = setInterval(() => {
-      this.setState(st => ({
+    let growPlayerBig = st => {
+      let size =
+          st.players.playerBig.size + (counter % GROWTH_RATE === 0 ? 1 : 0),
+        currPos = st.players.playerBig.position,
+        initialX = currPos[0][0].x,
+        initialY = currPos[0][0].y;
+
+      if (!this.checkXMaxBounds(currPos[size - 2][size - 2].x + 1)) {
+        initialX -= 1;
+      }
+      if (!this.checkYMaxBounds(currPos[size - 2][size - 2].y + 1)) {
+        initialY -= 1;
+      }
+      if (!this.checkXMinBounds(currPos[size - 2][size - 2].x - 1)) {
+        initialX += 1;
+      }
+      if (!this.checkYMinBounds(currPos[size - 2][size - 2].y - 1)) {
+        initialY += 1;
+      }
+
+      let position = this.setPlayerPosition(initialY, initialX, size);
+      let coordinates = this.setPlayerCoordinates(size, position);
+
+      return {
         timer: counter,
         players: {
           ...st.players,
           playerBig: {
             ...st.players.playerBig,
-            size: st.players.playerBig.size + 1,
-            position: this.setPlayerPosition(
-              st.players.playerBig.position[0][0].y,
-              st.players.playerBig.position[0][0].x,
-              st.players.playerBig.size + 1
-            ),
-            coordinates: this.setPlayerCoordinates(
-              st.players.playerBig.size + 1,
-              this.setPlayerPosition(
-                st.players.playerBig.position[0][0].y,
-                st.players.playerBig.position[0][0].x,
-                st.players.playerBig.size + 1
-              )
-            )
+            size,
+            position,
+            coordinates
           }
         }
-      }));
+      };
+    };
+    setTimerFunction = setInterval(() => {
+      this.setState(st => growPlayerBig(st));
       counter++;
-      // console.log(this.state.players.playerBig);
-    }, 2000);
+      this.checkWin();
+    }, 1000);
   }
 
   // Set timer
@@ -303,13 +355,35 @@ class Board extends Component {
     }, 1000);
   }
 
+  // Check win conditions
+  checkWin() {
+    const playerList = this.state.players;
+    for (let player in playerList) {
+      if (player !== 'playerBig') {
+        for (let item of playerList.playerBig.coordinates) {
+          if (playerList[player].coordinates.has(item)) {
+            this.setState({ bigWin: true });
+            this.stopGame();
+          }
+        }
+      }
+    }
+  }
+
   // Stop timer
   stopTimer() {
     clearInterval(setTimerFunction);
   }
 
+  // Stop game
+  stopGame() {
+    this.stopTimer();
+    window.document.removeEventListener('keydown', this.registerKeyPress);
+  }
+
   // Reset game
   resetGame() {
+    this.stopTimer();
     let defaultState = {
       board: this.createBoard(),
       players: this.createPlayerList(),
@@ -381,13 +455,15 @@ class Board extends Component {
           }
           // Set cell to be empty
           else {
-            row.push(<td className="cell" id={coord} coord={coord} />);
+            row.push(
+              <td className="cell" id={coord} coord={coord} key={coord} />
+            );
           }
         }
       }
 
       tblBoard.push(
-        <tr id={y} row={y}>
+        <tr id={y} row={y} key={y}>
           {row}
         </tr>
       );
@@ -400,13 +476,15 @@ class Board extends Component {
         </table>
         <h1>{this.state.timer}</h1>
         {this.state.bigWin ? (
-          <div>
-            <h1>
-              You've been eaten by the{' '}
-              <span style={{ color: 'red' }}>BEAST!!!</span>
-            </h1>
-            <button onClick={this.resetGame}>Start the Chase</button>
-          </div>
+          <h1>
+            You've been eaten by the{' '}
+            <span style={{ color: 'red' }}>BEAST!!!</span>
+          </h1>
+        ) : (
+          undefined
+        )}
+        {this.state.firstKeyPress ? (
+          <button onClick={this.resetGame}>Restart the Chase</button>
         ) : (
           undefined
         )}

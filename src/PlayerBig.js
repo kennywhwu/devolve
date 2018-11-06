@@ -9,11 +9,7 @@ class PlayerBig extends Component {
       backgroundColor: this.props.backgroundColor,
       border: this.props.border
     };
-    {
-      /* <td className="PlayerBig" background={this.props.image} style={style}>
-<img src={silas} alt="silas" width="60" height="60" />
-</td>  */
-    }
+
     return <td className="PlayerBig" style={style} />;
   }
 }
