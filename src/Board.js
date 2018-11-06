@@ -50,10 +50,10 @@ class Board extends Component {
     // Create playerBig object
     for (let i = 0; i < this.props.players.big; i++) {
       // Initialize position/coordinates
-      const size = 6;
+      const size = 3;
       const position = this.setPlayerPosition(
-        BORDER_SIZE,
-        this.props.xDimension - size - BORDER_SIZE,
+        BORDER_SIZE + 2,
+        this.props.xDimension - size - BORDER_SIZE - 2,
         size
       );
       const coordinates = this.setPlayerCoordinates(size, position);
@@ -262,6 +262,38 @@ class Board extends Component {
 
   // Set timer
   startTimer() {
+    let counter = 1;
+    setTimerFunction = setInterval(() => {
+      this.setState(st => ({
+        timer: counter,
+        players: {
+          ...st.players,
+          playerBig: {
+            ...st.players.playerBig,
+            size: st.players.playerBig.size + 1,
+            position: this.setPlayerPosition(
+              st.players.playerBig.position[0][0].y,
+              st.players.playerBig.position[0][0].x,
+              st.players.playerBig.size + 1
+            ),
+            coordinates: this.setPlayerCoordinates(
+              st.players.playerBig.size + 1,
+              this.setPlayerPosition(
+                st.players.playerBig.position[0][0].y,
+                st.players.playerBig.position[0][0].x,
+                st.players.playerBig.size + 1
+              )
+            )
+          }
+        }
+      }));
+      counter++;
+      // console.log(this.state.players.playerBig);
+    }, 2000);
+  }
+
+  // Set timer
+  startTimer1() {
     let counter = 1;
     setTimerFunction = setInterval(() => {
       this.setState({
