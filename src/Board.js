@@ -9,6 +9,7 @@ import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
 import keyDict from './keyDictionary';
+// import movePlayer from './movement';
 
 /////////////////
 /// CONSTANTS ///
@@ -19,7 +20,7 @@ const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
 // Constant game factors
 const BORDER_SIZE = 1;
-const GROWTH_RATE = 0;
+const GROWTH_RATE = 5;
 
 let setTimerFunction;
 
@@ -32,9 +33,11 @@ class Board extends Component {
       board: this.createBoard(),
       players: this.createPlayerList(),
       eatenPlayers: [],
-      bigWin: false,
+      escapedPlayers: [],
+      win: false,
       timer: 0,
-      firstKeyPress: false
+      firstKeyPress: false,
+      results: []
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
     this.stopGame = this.stopGame.bind(this);
@@ -45,7 +48,8 @@ class Board extends Component {
 
   static defaultProps = {
     xDimension: 15,
-    yDimension: 15
+    yDimension: 15,
+    exit: { y: 1, x: 14 }
   };
 
   ///////////////////////
@@ -82,7 +86,7 @@ class Board extends Component {
         border: '2px solid black',
         size,
         moveReady: true,
-        delay: 200,
+        delay: 300,
         // need to pass in created object to refer to the object that size is being called on
         // already bound to class, so can't use this.size
         // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
@@ -198,7 +202,6 @@ class Board extends Component {
     let yChange = 0;
     let xChange = 0;
     let board = this.state.board;
-    let bigWin = this.state.bigWin;
     let playerList = this.state.players;
     let position = playerList[player].position;
     let size = playerList[player].size;
@@ -289,8 +292,7 @@ class Board extends Component {
           )
         }
       },
-      board,
-      bigWin
+      board
     };
 
     // Change state
@@ -298,6 +300,7 @@ class Board extends Component {
 
     // Check for eaten/win conditions
     this.checkEaten();
+    this.checkEscaped();
     this.checkWin();
   }
 
@@ -347,6 +350,8 @@ class Board extends Component {
     setTimerFunction = setInterval(() => {
       this.setState(st => growPlayerBig(st));
       counter++;
+      this.checkEaten();
+      this.checkEscaped();
       this.checkWin();
     }, 1000);
   }
@@ -374,10 +379,11 @@ class Board extends Component {
   // Check position if crossing border bounds
   checkAllBounds(xMin, xMax, yMin, yMax) {
     if (
-      this.checkXMinBounds(xMin) &&
-      this.checkYMinBounds(yMin) &&
-      this.checkXMaxBounds(xMax) &&
-      this.checkXMaxBounds(yMax)
+      (this.checkXMinBounds(xMin) &&
+        this.checkYMinBounds(yMin) &&
+        this.checkXMaxBounds(xMax) &&
+        this.checkXMaxBounds(yMax)) ||
+      this.checkExit(yMin, xMin)
     ) {
       return true;
     }
@@ -395,6 +401,9 @@ class Board extends Component {
   checkYMaxBounds(yMax) {
     return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
   }
+  checkExit(y, x) {
+    return y === this.props.exit.y && x === this.props.exit.x;
+  }
 
   // Check player eaten
   checkEaten() {
@@ -407,7 +416,31 @@ class Board extends Component {
             delete playerList[player];
             this.setState(st => ({
               players: playerList,
-              eatenPlayers: [...st.eatenPlayers, { player, color }]
+              eatenPlayers: [...st.eatenPlayers, { player, color }],
+              results: [...st.results, { player, color, outcome: 'eaten' }]
+            }));
+          }
+        }
+      }
+    }
+  }
+
+  // Check player escape
+  checkEscaped() {
+    const playerList = this.state.players;
+    for (let player in playerList) {
+      if (player !== 'playerBig') {
+        for (let item of playerList[player].coordinates) {
+          if (
+            playerList[player] &&
+            item === `${this.props.exit.y}-${this.props.exit.x}`
+          ) {
+            let color = playerList[player].color;
+            delete playerList[player];
+            this.setState(st => ({
+              players: playerList,
+              escapedPlayers: [...st.escapedPlayers, { player, color }],
+              results: [...st.results, { player, color, outcome: 'escaped' }]
             }));
           }
         }
@@ -417,15 +450,24 @@ class Board extends Component {
 
   // Check win conditions
   checkWin() {
-    if (Object.keys(this.state.players).length === 1) {
-      this.setState({ bigWin: true });
+    let eaten = this.state.eatenPlayers.length,
+      escaped = this.state.escapedPlayers.length,
+      small = this.props.players.small;
+    if (eaten === small) {
+      this.setState({ win: 'big' });
+      this.stopGame();
+    } else if (escaped === small) {
+      this.setState({ win: 'small' });
+      this.stopGame();
+    } else if (eaten + escaped === small) {
+      this.setState({ win: 'tie' });
       this.stopGame();
     }
   }
 
-  /////////////////////////
-  /// GAME OVER ACTIONS ///
-  /////////////////////////
+  /////////////////
+  /// GAME OVER ///
+  /////////////////
 
   // Stop game
   stopGame() {
@@ -440,9 +482,11 @@ class Board extends Component {
       board: this.createBoard(),
       players: this.createPlayerList(),
       eatenPlayers: [],
-      bigWin: false,
+      escapedPlayers: [],
+      win: false,
       timer: 0,
-      firstKeyPress: false
+      firstKeyPress: false,
+      results: []
     };
     this.setState(defaultState);
     window.document.addEventListener('keydown', this.registerKeyPress);
@@ -493,6 +537,16 @@ class Board extends Component {
           pushed = true;
         }
 
+        if (
+          `${this.props.exit.y}-${this.props.exit.x}` === coord &&
+          pushed === false
+        ) {
+          row.push(
+            <td className="cell" id={coord} coord={coord} key={coord} />
+          );
+          pushed = true;
+        }
+
         if (!pushed) {
           // Set cell to be border
           if (
@@ -509,12 +563,14 @@ class Board extends Component {
                 style={{ backgroundColor: 'gray' }}
               />
             );
+            pushed = true;
           }
           // Set cell to be empty
           else {
             row.push(
               <td className="cell" id={coord} coord={coord} key={coord} />
             );
+            pushed = true;
           }
         }
       }
@@ -526,6 +582,40 @@ class Board extends Component {
       );
     }
 
+    let results = this.state.results.map(e => {
+      if (e.outcome === 'escaped') {
+        return (
+          <h3 key={e.color}>
+            <span style={{ color: e.color }}>{e.color.toUpperCase()}</span> has
+            escaped!!!
+          </h3>
+        );
+      } else if (e.outcome === 'eaten') {
+        return (
+          <h3 key={e.color}>
+            <span style={{ color: e.color }}>{e.color.toUpperCase()}</span> has
+            been eaten by the <span style={{ color: 'red' }}>BEAST!!!</span>
+          </h3>
+        );
+      }
+    });
+
+    let endResult;
+    if (this.state.win === 'big') {
+      endResult = (
+        <h1>
+          Y'ALL got eaten by the <span style={{ color: 'red' }}>BEAST!!!</span>
+        </h1>
+      );
+    } else if (this.state.win === 'small') {
+      endResult = (
+        <h1>
+          Good job running from the{' '}
+          <span style={{ color: 'red' }}>BEAST!!!</span>
+        </h1>
+      );
+    }
+
     return (
       <div className="Board">
         <table className="Board">
@@ -533,21 +623,10 @@ class Board extends Component {
         </table>
         <h1>{this.state.timer}</h1>
 
-        {this.state.eatenPlayers.map(e => (
-          <h2 key={e.color}>
-            <span style={{ color: e.color }}>{e.color.toUpperCase()}</span> has
-            been eaten by the <span style={{ color: 'red' }}>BEAST!!!</span>
-          </h2>
-        ))}
+        {results}
 
-        {this.state.bigWin ? (
-          <h1>
-            You've ALLLL been eaten by the{' '}
-            <span style={{ color: 'red' }}>BEAST!!!</span>
-          </h1>
-        ) : (
-          undefined
-        )}
+        {endResult}
+
         {this.state.firstKeyPress ? (
           <button onClick={this.resetGame}>Restart the Chase</button>
         ) : (
