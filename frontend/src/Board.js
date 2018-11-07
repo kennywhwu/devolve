@@ -21,6 +21,7 @@ const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 // Constant game factors
 const BORDER_SIZE = 1;
 const GROWTH_RATE = 5;
+const EXIT_RATE = 5;
 
 let setTimerFunction;
 
@@ -37,7 +38,8 @@ class Board extends Component {
       win: false,
       timer: 0,
       firstKeyPress: false,
-      results: []
+      results: [],
+      exit: { y: 1, x: 14 }
     };
     this.registerKeyPress = this.registerKeyPress.bind(this);
     this.stopGame = this.stopGame.bind(this);
@@ -48,8 +50,7 @@ class Board extends Component {
 
   static defaultProps = {
     xDimension: 15,
-    yDimension: 15,
-    exit: { y: 1, x: 14 }
+    yDimension: 15
   };
 
   ///////////////////////
@@ -86,7 +87,7 @@ class Board extends Component {
         border: '2px solid black',
         size,
         moveReady: true,
-        delay: 300,
+        delay: 100,
         // need to pass in created object to refer to the object that size is being called on
         // already bound to class, so can't use this.size
         // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
@@ -143,7 +144,7 @@ class Board extends Component {
     let coord = new Set();
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
-        coord.add(`${position[i][j].y}-${position[i][j].x}`);
+        coord.add(`_${position[i][j].y}-${position[i][j].x}`);
       }
     }
 
@@ -308,6 +309,27 @@ class Board extends Component {
   /// TIMER/GROWTH ///
   ////////////////////
 
+  // Change exit location
+  changeExit() {
+    let y;
+    let x;
+
+    if (Math.random() < 0.25) {
+      y = 0;
+      x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
+    } else if (Math.random() < 0.25) {
+      y = this.props.yDimension - 1;
+      x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
+    } else if (Math.random() < 0.25) {
+      y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
+      x = 0;
+    } else {
+      y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
+      x = this.props.xDimension - 1;
+    }
+    this.setState({ exit: { y, x } });
+  }
+
   // Set timer/growth rate
   startTimer() {
     let counter = 1;
@@ -350,6 +372,9 @@ class Board extends Component {
     setTimerFunction = setInterval(() => {
       this.setState(st => growPlayerBig(st));
       counter++;
+      if (counter % EXIT_RATE === 0) {
+        this.changeExit();
+      }
       this.checkEaten();
       this.checkEscaped();
       this.checkWin();
@@ -402,7 +427,7 @@ class Board extends Component {
     return yMax < this.props.yDimension - BORDER_SIZE ? true : false;
   }
   checkExit(y, x) {
-    return y === this.props.exit.y && x === this.props.exit.x;
+    return y === this.state.exit.y && x === this.state.exit.x;
   }
 
   // Check player eaten
@@ -433,7 +458,7 @@ class Board extends Component {
         for (let item of playerList[player].coordinates) {
           if (
             playerList[player] &&
-            item === `${this.props.exit.y}-${this.props.exit.x}`
+            item === `_${this.state.exit.y}-${this.state.exit.x}`
           ) {
             let color = playerList[player].color;
             delete playerList[player];
@@ -504,7 +529,7 @@ class Board extends Component {
     for (let y = 0; y < this.props.yDimension; y++) {
       let row = [];
       for (let x = 0; x < this.props.xDimension; x++) {
-        let coord = `${y}-${x}`;
+        let coord = `_${y}-${x}`;
 
         // Using pushed variable is janky; FIX THIS
         let pushed = false;
@@ -538,7 +563,7 @@ class Board extends Component {
         }
 
         if (
-          `${this.props.exit.y}-${this.props.exit.x}` === coord &&
+          `_${this.state.exit.y}-${this.state.exit.x}` === coord &&
           pushed === false
         ) {
           row.push(
