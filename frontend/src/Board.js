@@ -585,7 +585,7 @@ class Board extends Component {
                 className="cell"
                 key={coord}
                 id={coord}
-                style={{ backgroundColor: 'gray' }}
+                // style={{ backgroundColor: 'gray' }}
               />
             );
             pushed = true;
