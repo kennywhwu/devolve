@@ -9,7 +9,6 @@ import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
 import keyDict from './keyDictionary';
-// import movePlayer from './movement';
 
 /////////////////
 /// CONSTANTS ///
@@ -20,18 +19,30 @@ const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
 
 // Constant game factors
 const BORDER_SIZE = 1;
-const GROWTH_RATE = 5;
+const GROWTH_RATE = 0;
 const EXIT_RATE = 5;
 
 let setTimerFunction;
 
-// Board class
+//////////////////
+/// WEBSOCKETS ///
+//////////////////
+
+/** Client-side of websocket. */
+
+const urlParts = document.URL.split('/');
+const roomName = urlParts[urlParts.length - 1];
+
+///////////////////
+/// BOARD CLASS ///
+///////////////////
 
 class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
       board: this.createBoard(),
+      currentPlayer: null,
       players: this.createPlayerList(),
       eatenPlayers: [],
       escapedPlayers: [],
@@ -41,17 +52,74 @@ class Board extends Component {
       results: [],
       exit: { y: 1, x: 14 }
     };
-    this.registerKeyPress = this.registerKeyPress.bind(this);
+    this.decodeKeyBoardEvent = this.decodeKeyBoardEvent.bind(this);
+    // this.registerKeyPress = this.registerKeyPress.bind(this);
     this.stopGame = this.stopGame.bind(this);
-    this.resetGame = this.resetGame.bind(this);
-    this.setPlayerPosition = this.setPlayerPosition.bind(this);
-    window.document.addEventListener('keydown', this.registerKeyPress);
+    // this.resetGame = this.resetGame.bind(this);
+    this.handleResetButton = this.handleResetButton.bind(this);
+    // this.setPlayerPosition = this.setPlayerPosition.bind(this);
+    window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
   }
 
   static defaultProps = {
     xDimension: 15,
     yDimension: 15
   };
+
+  // When component mounts, create and open new websocket, prompt user names and player types, and listen for incoming messages from server
+  componentDidMount() {
+    this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
+
+    // this.name = prompt('Username?', 'Kenny');
+    // this.player = prompt('Player?', 'playerSmall1');
+
+    this.connection.onopen = evt => {
+      let data = { type: 'join' };
+      this.connection.send(JSON.stringify(data));
+    };
+
+    // this.connection.onopen = evt => {
+    //   let data = { type: 'join', name: this.name, player: this.player };
+    //   this.connection.send(JSON.stringify(data));
+    // };
+
+    // listen to onmessage event
+    this.connection.onmessage = evt => {
+      let data = JSON.parse(evt.data);
+      if (data.type === 'join') {
+        this.setState({ currentPlayer: data.player });
+      }
+
+      // If incoming message is keypress, then invoke registerKeyPress function
+      if (data.type === 'keypress') {
+        this.registerKeyPress(data.key);
+        // add the new message to state
+        // this.setState(data.state);
+      }
+      // if (data.type === 'win') {
+      //   console.log('this.state.eatenPlayers', this.state.eatenPlayers);
+      //   console.log('this.state.escapedPlayers', this.state.escapedPlayers);
+      //   this.setState({ win: data.win });
+      // }
+
+      // If incoming message is keypress, then invoke registerKeyPress function
+      if (data.type === 'reset') {
+        this.resetGame();
+      }
+    };
+  }
+
+  // componentDidUpdate() {
+  //   if (this.state.win !== false) {
+  //     this.connection.send(
+  //       JSON.stringify({
+  //         name: this.name,
+  //         type: 'win',
+  //         win: this.state.win
+  //       })
+  //     );
+  //   }
+  // }
 
   ///////////////////////
   /// INITIALIZE GAME ///
@@ -141,10 +209,10 @@ class Board extends Component {
 
   // Translate position object into string coordinate
   setPlayerCoordinates(size, position) {
-    let coord = new Set();
+    let coord = [];
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
-        coord.add(`_${position[i][j].y}-${position[i][j].x}`);
+        coord.push(`_${position[i][j].y}-${position[i][j].x}`);
       }
     }
 
@@ -155,17 +223,31 @@ class Board extends Component {
   /// KEYPRESS ///
   ////////////////
 
-  // Call action based on keypress
-  registerKeyPress(evt) {
+  // Translate keyboard event into actual key pressed
+  decodeKeyBoardEvent(evt) {
     let keyDef = keyDict[evt.key.toString()];
+    this.connection.send(
+      JSON.stringify({
+        // state: this.state,
+        name: this.name,
+        player: this.player,
+        type: 'keypress',
+        key: keyDef
+      })
+    );
+    this.registerKeyPress(this.keyDef);
+  }
+
+  // Call action based on keypress
+  registerKeyPress(keyDef) {
     if (keyDef !== undefined && keyDef.player in this.state.players) {
       if (keyDef.type === 'movement') {
         this.moveDelay(keyDef.player, keyDef.action);
       }
-    }
-    if (!this.state.firstKeyPress) {
-      this.setState({ firstKeyPress: true });
-      this.startTimer();
+      if (!this.state.firstKeyPress) {
+        this.setState({ firstKeyPress: true });
+        this.startTimer();
+      }
     }
   }
 
@@ -436,7 +518,10 @@ class Board extends Component {
     for (let player in playerList) {
       if (player !== 'playerBig') {
         for (let item of playerList.playerBig.coordinates) {
-          if (playerList[player] && playerList[player].coordinates.has(item)) {
+          if (
+            playerList[player] &&
+            playerList[player].coordinates.some(e => e === item)
+          ) {
             let color = playerList[player].color;
             delete playerList[player];
             this.setState(st => ({
@@ -494,10 +579,21 @@ class Board extends Component {
   /// GAME OVER ///
   /////////////////
 
+  handleResetButton() {
+    this.connection.send(
+      JSON.stringify({
+        name: this.name,
+        player: this.player,
+        type: 'reset'
+      })
+    );
+    // this.resetGame();
+  }
+
   // Stop game
   stopGame() {
     this.stopTimer();
-    window.document.removeEventListener('keydown', this.registerKeyPress);
+    window.document.removeEventListener('keydown', this.decodeKeyBoardEvent);
   }
 
   // Reset game
@@ -513,8 +609,8 @@ class Board extends Component {
       firstKeyPress: false,
       results: []
     };
-    this.setState(defaultState);
-    window.document.addEventListener('keydown', this.registerKeyPress);
+    this.setState(defaultState, () => console.log(this.state));
+    window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
   }
 
   //////////////
@@ -537,7 +633,10 @@ class Board extends Component {
 
         // Set cell to be specific playerSmall
         for (let player in smallPlayers) {
-          if (playerList[player].coordinates.has(coord) && pushed === false) {
+          if (
+            playerList[player].coordinates.some(e => e === coord) &&
+            pushed === false
+          ) {
             row.push(
               <PlayerSmall
                 key={coord}
@@ -550,7 +649,7 @@ class Board extends Component {
           }
         }
         // Set cell to be playerBig
-        if (playerBig.coordinates.has(coord) && pushed === false) {
+        if (playerBig.coordinates.some(e => e === coord) && pushed === false) {
           row.push(
             <PlayerBig
               key={coord}
@@ -585,6 +684,7 @@ class Board extends Component {
                 className="cell"
                 key={coord}
                 id={coord}
+                // Removed for ingame graphics
                 // style={{ backgroundColor: 'gray' }}
               />
             );
@@ -643,17 +743,15 @@ class Board extends Component {
 
     return (
       <div className="Board">
+        You are: {this.state.currentPlayer}
         <table className="Board">
           <tbody>{tblBoard}</tbody>
         </table>
         <h1>{this.state.timer}</h1>
-
         {results}
-
         {endResult}
-
         {this.state.firstKeyPress ? (
-          <button onClick={this.resetGame}>Restart the Chase</button>
+          <button onClick={this.handleResetButton}>Restart the Chase</button>
         ) : (
           undefined
         )}

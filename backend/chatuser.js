@@ -29,12 +29,21 @@ class ChatUser {
 
   /** handle joining: add to room members, announce join */
 
-  handleJoin(name) {
-    this.name = name;
+  handleJoin(msg) {
+    // this.name = msg.name;
+    this.room.player = !this.room.player;
+    if (this.room.player === false) {
+      this.player = 'playerBig';
+    } else if (this.room.player === true) {
+      this.player = 'playerSmall1';
+      // } else if (data.player === 3) {
+      //   this.player = 'playerSmall2';
+    }
     this.room.join(this);
-    this.room.broadcast({
-      type: 'note',
-      text: `${this.name} joined "${this.room.name}".`
+    this.room.direct(this, {
+      type: 'join',
+      text: `${this.name} joined "${this.room.name}".`,
+      player: this.player
     });
   }
 
@@ -45,6 +54,38 @@ class ChatUser {
       name: this.name,
       type: 'chat',
       text: text
+    });
+  }
+  /** handle a keypress: broadcast to room. */
+
+  handleKeyPress(msg) {
+    if (msg.key.player === this.player) {
+      this.room.broadcast({
+        name: this.name,
+        player: this.player,
+        type: 'keypress',
+        // state: msg.state,
+        key: msg.key
+      });
+    }
+  }
+  /** handle win: broadcast to room. */
+
+  handleWin(msg) {
+    this.room.broadcast({
+      name: this.name,
+      player: this.player,
+      type: 'win',
+      win: msg.win
+    });
+  }
+  /** handle reset: broadcast to room. */
+
+  handleReset(msg) {
+    this.room.broadcast({
+      name: this.name,
+      player: this.player,
+      type: 'reset'
     });
   }
 
@@ -58,11 +99,17 @@ class ChatUser {
     let msg = JSON.parse(jsonData);
     console.log('msg ', msg);
     if (msg.type === 'join') {
-      this.handleJoin(msg.name);
+      this.handleJoin(msg);
     } else if (msg.type === 'chat') {
       this.handleChat(msg.text);
     } else if (msg.type === 'joke') {
       this.handleJoke(await this.makeJokeRequest());
+    } else if (msg.type === 'keypress') {
+      this.handleKeyPress(msg);
+    } else if (msg.type === 'win') {
+      this.handleWin(msg);
+    } else if (msg.type === 'reset') {
+      this.handleReset(msg);
     } else {
       throw new Error(`bad message: ${msg.type}`);
     }

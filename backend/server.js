@@ -1,9 +1,7 @@
 /** server for groupchat */
 
+const app = require('./app');
 
-const app = require("./app");
-
-
-app.listen(3000, function () {
-  console.log("server started on 3000");
+app.listen(3005, function() {
+  console.log('server started on 3005');
 });

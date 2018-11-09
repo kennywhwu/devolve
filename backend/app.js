@@ -6,6 +6,7 @@ app = express();
 // serve stuff in static/ folder
 
 app.use(express.static('static/'));
+const path = require('path');
 
 /** Handle websocket chat */
 
@@ -23,7 +24,7 @@ const ChatUser = require('./chatuser');
  * The `ws.send` method is how we'll send messages back to that socket.
  */
 
-app.ws('/chat/:roomName', function(ws, req, next) {
+app.ws('/devolve/:roomName', function(ws, req, next) {
   try {
     const user = new ChatUser(
       ws.send.bind(ws), // fn to call to message this user
@@ -33,6 +34,7 @@ app.ws('/chat/:roomName', function(ws, req, next) {
     // register handlers for message-received, connection-closed
 
     ws.on('message', function(data) {
+      console.log('message received');
       try {
         user.handleMessage(data);
       } catch (err) {
@@ -59,8 +61,11 @@ app.ws('/chat/:roomName', function(ws, req, next) {
  *
  * */
 
-app.get('/:roomName', function(req, res, next) {
-  res.sendFile(`${__dirname}/chat.html`);
-});
+// app.get('/:roomName', function(req, res, next) {
+//   // res.sendFile(`${__dirname}/chat.html`);
+//   res.sendFile('index.html', {
+//     root: path.join(__dirname, '../frontend/public')
+//   });
+// });
 
 module.exports = app;

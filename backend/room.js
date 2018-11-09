@@ -1,17 +1,14 @@
 /** Chat rooms that can be joined/left/broadcast to. */
 
-
 // in-memory storage of roomNames -> room
 
 const ROOMS = new Map();
-
 
 /** Room is a collection of listening members; this becomes a "chat room"
  *   where individual users can join/leave/broadcast to.
  */
 
 class Room {
-
   /** get room by that name, creating if nonexistent
    *
    * This uses a programming pattern often called a "registry" ---
@@ -22,7 +19,7 @@ class Room {
 
   static get(roomName) {
     if (!ROOMS.has(roomName)) {
-      ROOMS.set(roomName, new Room(roomName))
+      ROOMS.set(roomName, new Room(roomName));
     }
 
     return ROOMS.get(roomName);
@@ -33,6 +30,7 @@ class Room {
   constructor(roomName) {
     this.name = roomName;
     this.members = new Set();
+    this.counter = false;
   }
 
   /** member joining a room. */
@@ -50,11 +48,15 @@ class Room {
   /** send message to all members in a room. */
 
   broadcast(data) {
+    console.log('broadcast', data);
     for (let member of this.members) {
       member.send(JSON.stringify(data));
     }
   }
-}
 
+  direct(member, data) {
+    member.send(JSON.stringify(data));
+  }
+}
 
 module.exports = Room;

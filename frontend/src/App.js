@@ -6,7 +6,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <Board xDimension={15} yDimension={15} players={{ big: 1, small: 2 }} />
+        <Board xDimension={15} yDimension={15} players={{ big: 1, small: 1 }} />
       </div>
     );
   }
