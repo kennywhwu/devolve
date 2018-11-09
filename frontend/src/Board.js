@@ -15,7 +15,18 @@ import keyDict from './keyDictionary';
 /////////////////
 
 // Key for defining order of player colors
-const playerColorKey = ['blue', 'green', 'yellow', 'tomato'];
+const playerColorKey = [
+  'blue',
+  'green',
+  'yellow',
+  'tomato',
+  'purple',
+  'pink',
+  'black',
+  'brown',
+  'orange',
+  'magenta'
+];
 
 // Constant game factors
 const BORDER_SIZE = 1;
@@ -50,7 +61,8 @@ class Board extends Component {
       timer: 0,
       firstKeyPress: false,
       results: [],
-      exit: { y: 1, x: 14 }
+      exit: { y: 1, x: 14 },
+      isLoading: true
     };
     this.decodeKeyBoardEvent = this.decodeKeyBoardEvent.bind(this);
     this.stopGame = this.stopGame.bind(this);
@@ -75,7 +87,7 @@ class Board extends Component {
     // this.player = prompt('Player?', 'playerSmall1');
 
     this.connection.onopen = evt => {
-      let data = { type: 'join' };
+      let data = { type: 'join', state: this.state };
       this.connection.send(JSON.stringify(data));
     };
 
@@ -88,7 +100,29 @@ class Board extends Component {
     this.connection.onmessage = evt => {
       let data = JSON.parse(evt.data);
       if (data.type === 'join') {
-        this.setState({ currentPlayer: data.player });
+        if (data.player === 'playerBig') {
+          // console.log('data.state', data.state);
+          this.setState({ currentPlayer: data.player, isLoading: false });
+        } else {
+          // console.log('currentPlayer', data.player);
+          // this.setState({ currentPlayer: data.player, isLoading: false });
+        }
+      }
+
+      if (data.type === 'other_join') {
+        console.log('other-join');
+        if (this.state.currentPlayer === 'playerBig') {
+          this.connection.send(
+            JSON.stringify({ type: 'current_state', state: this.state })
+          );
+        }
+      }
+
+      if (data.type === 'current_state') {
+        console.log('current-state', data.state);
+        if (this.state.isLoading === true) {
+          this.setState(data.state);
+        }
       }
 
       // If incoming message is keypress, then invoke registerKeyPress function
@@ -107,6 +141,11 @@ class Board extends Component {
       if (data.type === 'reset') {
         this.resetGame();
       }
+
+      if (data.type === 'exit') {
+        console.log('exit');
+        this.setState({ exit: { y: data.exit.y, x: data.exit.x } });
+      }
     };
   }
 
@@ -120,6 +159,10 @@ class Board extends Component {
   //       })
   //     );
   //   }
+  // }
+
+  // componentWillUnmount() {
+  //   this.connection.send(JSON.stringify({ type: 'close' }));
   // }
 
   ///////////////////////
@@ -394,23 +437,33 @@ class Board extends Component {
 
   // Change exit location
   changeExit() {
-    let y;
-    let x;
+    // let y;
+    // let x;
 
-    if (Math.random() < 0.25) {
-      y = 0;
-      x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
-    } else if (Math.random() < 0.25) {
-      y = this.props.yDimension - 1;
-      x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
-    } else if (Math.random() < 0.25) {
-      y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
-      x = 0;
-    } else {
-      y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
-      x = this.props.xDimension - 1;
+    // if (Math.random() < 0.25) {
+    //   y = 0;
+    //   x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
+    // } else if (Math.random() < 0.25) {
+    //   y = this.props.yDimension - 1;
+    //   x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
+    // } else if (Math.random() < 0.25) {
+    //   y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
+    //   x = 0;
+    // } else {
+    //   y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
+    //   x = this.props.xDimension - 1;
+    // }
+
+    if (this.state.currentPlayer === 'playerBig') {
+      this.connection.send(
+        JSON.stringify({
+          name: this.name,
+          player: this.player,
+          type: 'exit',
+          dimensions: { y: this.props.yDimension, x: this.props.xDimension }
+        })
+      );
     }
-    this.setState({ exit: { y, x } });
   }
 
   // Set timer/growth rate
@@ -686,7 +739,7 @@ class Board extends Component {
                 key={coord}
                 id={coord}
                 // Removed for ingame graphics
-                // style={{ backgroundColor: 'gray' }}
+                style={{ backgroundColor: 'gray' }}
               />
             );
             pushed = true;
@@ -744,17 +797,25 @@ class Board extends Component {
 
     return (
       <div className="Board">
-        You are: {this.state.currentPlayer}
-        <table className="Board">
-          <tbody>{tblBoard}</tbody>
-        </table>
-        <h1>{this.state.timer}</h1>
-        {results}
-        {endResult}
-        {this.state.firstKeyPress ? (
-          <button onClick={this.handleResetButton}>Restart the Chase</button>
+        {this.state.isLoading ? (
+          <h1>Game Loading....</h1>
         ) : (
-          undefined
+          <div>
+            You are: {this.state.currentPlayer}
+            <table className="Board">
+              <tbody>{tblBoard}</tbody>
+            </table>
+            {/* <h1>{this.state.timer}</h1> */}
+            {results}
+            {endResult}
+            {this.state.firstKeyPress ? (
+              <button onClick={this.handleResetButton}>
+                Restart the Chase
+              </button>
+            ) : (
+              undefined
+            )}
+          </div>
         )}
       </div>
     );

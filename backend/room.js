@@ -30,7 +30,7 @@ class Room {
   constructor(roomName) {
     this.name = roomName;
     this.members = new Set();
-    this.counter = false;
+    this.player = 0;
   }
 
   /** member joining a room. */
@@ -48,7 +48,7 @@ class Room {
   /** send message to all members in a room. */
 
   broadcast(data) {
-    console.log('broadcast', data);
+    // console.log('broadcast', data);
     for (let member of this.members) {
       member.send(JSON.stringify(data));
     }

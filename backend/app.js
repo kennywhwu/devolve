@@ -34,7 +34,7 @@ app.ws('/devolve/:roomName', function(ws, req, next) {
     // register handlers for message-received, connection-closed
 
     ws.on('message', function(data) {
-      console.log('message received', JSON.parse(data));
+      // console.log('message received', JSON.parse(data));
       try {
         user.handleMessage(data);
       } catch (err) {
