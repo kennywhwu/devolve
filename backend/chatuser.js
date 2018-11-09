@@ -59,15 +59,16 @@ class ChatUser {
   /** handle a keypress: broadcast to room. */
 
   handleKeyPress(msg) {
-    if (msg.key.player === this.player) {
-      this.room.broadcast({
-        name: this.name,
-        player: this.player,
-        type: 'keypress',
-        // state: msg.state,
-        key: msg.key
-      });
-    }
+    console.log('handleKeyPress msg', msg);
+    let key = { ...msg.key, player: msg.player };
+    // if (msg.key.player === this.player) {
+    this.room.broadcast({
+      name: this.name,
+      type: 'keypress',
+      // state: msg.state,
+      key
+    });
+    // }
   }
   /** handle win: broadcast to room. */
 
@@ -106,6 +107,7 @@ class ChatUser {
       this.handleJoke(await this.makeJokeRequest());
     } else if (msg.type === 'keypress') {
       this.handleKeyPress(msg);
+      console.log('handleMessage', msg);
     } else if (msg.type === 'win') {
       this.handleWin(msg);
     } else if (msg.type === 'reset') {

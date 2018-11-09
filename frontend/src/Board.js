@@ -53,11 +53,9 @@ class Board extends Component {
       exit: { y: 1, x: 14 }
     };
     this.decodeKeyBoardEvent = this.decodeKeyBoardEvent.bind(this);
-    // this.registerKeyPress = this.registerKeyPress.bind(this);
     this.stopGame = this.stopGame.bind(this);
     // this.resetGame = this.resetGame.bind(this);
     this.handleResetButton = this.handleResetButton.bind(this);
-    // this.setPlayerPosition = this.setPlayerPosition.bind(this);
     window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
   }
 
@@ -68,7 +66,10 @@ class Board extends Component {
 
   // When component mounts, create and open new websocket, prompt user names and player types, and listen for incoming messages from server
   componentDidMount() {
-    this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
+    this.connection = new WebSocket(
+      `ws://192.168.1.175:3005/devolve/${roomName}`
+    );
+    // 192.168.1.175
 
     // this.name = prompt('Username?', 'Kenny');
     // this.player = prompt('Player?', 'playerSmall1');
@@ -230,7 +231,7 @@ class Board extends Component {
       JSON.stringify({
         // state: this.state,
         name: this.name,
-        player: this.player,
+        player: this.state.currentPlayer,
         type: 'keypress',
         key: keyDef
       })
