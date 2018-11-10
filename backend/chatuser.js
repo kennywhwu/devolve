@@ -31,12 +31,17 @@ class ChatUser {
 
   handleJoin(msg) {
     // this.name = msg.name;
-    console.log('room size', this.room.player, this.room.members.size);
+    console.log(
+      `!this.room.players.has('playerBig')`,
+      !this.room.players.has('playerBig'),
+      this.room.players
+    );
     if (this.room.members.size === 0) {
       this.room.player = 0;
       this.player = 'playerBig';
+    } else if (!this.room.players.has('playerBig')) {
+      this.player = 'playerBig';
     }
-
     // } else if (data.player === 3) {
     //   this.player = 'playerSmall2';
 
@@ -114,17 +119,31 @@ class ChatUser {
   /** handle current state: broadcast to room. */
 
   handleCurrentState(msg) {
-    console.log('this.room.player', this.room.player);
-    console.log('this.room.members.size', this.room.members.size);
-
     if (this.room.player >= this.room.members.size - 1) {
       this.player = `playerSmall${this.room.members.size - 1}`;
     } else if (this.room.player >= 0) {
       this.room.player++;
-      this.player = `playerSmall${this.room.player}`;
+      let newPlayer = `playerSmall${this.room.player}`;
+      console.log('this.room.players', this.room.players, newPlayer);
+      if (!this.room.players.has(newPlayer)) {
+        this.player = newPlayer;
+      }
     } else {
       this.player = 'playerBig';
     }
+
+    // if (this.room.player >= this.room.members.size - 1) {
+    //   this.player = `playerSmall${this.room.members.size - 1}`;
+    // } else if (this.room.player >= 0) {
+    //   if (!this.room.players.has(this.player)) {
+    //     this.room.player++;
+    //     this.player = `playerSmall${this.room.player}`;
+    //   }
+    // } else {
+    //   this.player = 'playerBig';
+    // }
+    this.room.join(this);
+
     msg.state.currentPlayer = this.player;
     this.room.broadcast({
       name: this.name,

@@ -30,6 +30,7 @@ class Room {
   constructor(roomName) {
     this.name = roomName;
     this.members = new Set();
+    this.players = new Set();
     this.player = 0;
   }
 
@@ -37,12 +38,15 @@ class Room {
 
   join(member) {
     this.members.add(member);
+    this.players.add(member.player);
   }
 
   /** member leaving a room. */
 
   leave(member) {
     this.members.delete(member);
+    this.players.delete(member.player);
+    console.log('member', this.players);
   }
 
   /** send message to all members in a room. */

@@ -78,9 +78,10 @@ class Board extends Component {
 
   // When component mounts, create and open new websocket, prompt user names and player types, and listen for incoming messages from server
   componentDidMount() {
-    this.connection = new WebSocket(
-      `ws://192.168.1.175:3005/devolve/${roomName}`
-    );
+    this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
+    // this.connection = new WebSocket(
+    //   `ws://192.168.1.175:3005/devolve/${roomName}`
+    // );
     // 192.168.1.175
 
     // this.name = prompt('Username?', 'Kenny');
