@@ -41,8 +41,8 @@ let setTimerFunction;
 
 /** Client-side of websocket. */
 
-const urlParts = document.URL.split('/');
-const roomName = urlParts[urlParts.length - 1];
+// const urlParts = document.URL.split('/');
+// const roomName = urlParts[urlParts.length - 1];
 
 ///////////////////
 /// BOARD CLASS ///
@@ -53,7 +53,7 @@ class Board extends Component {
     super(props);
     this.state = {
       board: this.createBoard(),
-      currentPlayer: null,
+      // currentPlayer: null,
       players: this.createPlayerList(),
       eatenPlayers: [],
       escapedPlayers: [],
@@ -78,7 +78,7 @@ class Board extends Component {
 
   // When component mounts, create and open new websocket, prompt user names and player types, and listen for incoming messages from server
   componentDidMount() {
-    this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
+    // this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
     // this.connection = new WebSocket(
     //   `ws://192.168.1.175:3005/devolve/${roomName}`
     // );
@@ -87,10 +87,10 @@ class Board extends Component {
     // this.name = prompt('Username?', 'Kenny');
     // this.player = prompt('Player?', 'playerSmall1');
 
-    this.connection.onopen = evt => {
-      let data = { type: 'join', state: this.state };
-      this.connection.send(JSON.stringify(data));
-    };
+    // this.connection.onopen = evt => {
+    //   let data = { type: 'join', state: this.state };
+    //   this.connection.send(JSON.stringify(data));
+    // };
 
     // this.connection.onopen = evt => {
     //   let data = { type: 'join', name: this.name, player: this.player };
@@ -98,33 +98,8 @@ class Board extends Component {
     // };
 
     // listen to onmessage event
-    this.connection.onmessage = evt => {
+    this.props.connection.onmessage = evt => {
       let data = JSON.parse(evt.data);
-      if (data.type === 'join') {
-        if (data.player === 'playerBig') {
-          // console.log('data.state', data.state);
-          this.setState({ currentPlayer: data.player, isLoading: false });
-        } else {
-          // console.log('currentPlayer', data.player);
-          // this.setState({ currentPlayer: data.player, isLoading: false });
-        }
-      }
-
-      if (data.type === 'other_join') {
-        console.log('other-join');
-        if (this.state.currentPlayer === 'playerBig') {
-          this.connection.send(
-            JSON.stringify({ type: 'current_state', state: this.state })
-          );
-        }
-      }
-
-      if (data.type === 'current_state') {
-        console.log('current-state', data.state);
-        if (this.state.isLoading === true) {
-          this.setState(data.state);
-        }
-      }
 
       // If incoming message is keypress, then invoke registerKeyPress function
       if (data.type === 'keypress') {
@@ -271,11 +246,11 @@ class Board extends Component {
   // Translate keyboard event into actual key pressed
   decodeKeyBoardEvent(evt) {
     let keyDef = keyDict[evt.key.toString()];
-    this.connection.send(
+    this.props.connection.send(
       JSON.stringify({
         // state: this.state,
         name: this.name,
-        player: this.state.currentPlayer,
+        player: this.props.currentPlayer.player,
         type: 'keypress',
         key: keyDef
       })
@@ -455,8 +430,8 @@ class Board extends Component {
     //   x = this.props.xDimension - 1;
     // }
 
-    if (this.state.currentPlayer === 'playerBig') {
-      this.connection.send(
+    if (this.props.currentPlayer.player === 'playerBig') {
+      this.props.connection.send(
         JSON.stringify({
           name: this.name,
           player: this.player,
@@ -635,7 +610,7 @@ class Board extends Component {
   /////////////////
 
   handleResetButton() {
-    this.connection.send(
+    this.props.connection.send(
       JSON.stringify({
         name: this.name,
         player: this.player,
@@ -798,25 +773,29 @@ class Board extends Component {
 
     return (
       <div className="Board">
-        {this.state.isLoading ? (
-          <h1>Game Loading....</h1>
+        You are:{' '}
+        <b style={{ color: this.props.currentPlayer.color }}>
+          {this.props.currentPlayer.player === 'playerBig' ? (
+            <span>THE BEAST</span>
+          ) : (
+            <span>{this.props.currentPlayer.color.toUpperCase()}</span>
+          )}
+        </b>
+        <table className="Board">
+          <tbody>{tblBoard}</tbody>
+        </table>
+        <h1>{this.state.timer}</h1>
+        {results}
+        {endResult}
+        {this.state.firstKeyPress ? (
+          <button
+            className="btn btn-warning my-3"
+            onClick={this.handleResetButton}
+          >
+            Restart the Chase
+          </button>
         ) : (
-          <div>
-            You are: {this.state.currentPlayer}
-            <table className="Board">
-              <tbody>{tblBoard}</tbody>
-            </table>
-            {/* <h1>{this.state.timer}</h1> */}
-            {results}
-            {endResult}
-            {this.state.firstKeyPress ? (
-              <button onClick={this.handleResetButton}>
-                Restart the Chase
-              </button>
-            ) : (
-              undefined
-            )}
-          </div>
+          undefined
         )}
       </div>
     );

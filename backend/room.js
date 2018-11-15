@@ -30,23 +30,31 @@ class Room {
   constructor(roomName) {
     this.name = roomName;
     this.members = new Set();
-    this.players = new Set();
-    this.player = 0;
+    this.players = {};
+    this.playerMarker = 1;
   }
 
   /** member joining a room. */
 
   join(member) {
     this.members.add(member);
-    this.players.add(member.player);
+    let { player, color } = member.currentPlayer;
+    this.players[player] = { player, color };
+  }
+
+  /** member is ready. */
+
+  ready(member) {
+    this.players[member.currentPlayer.player].isReady = !this.players[
+      member.currentPlayer.player
+    ].isReady;
   }
 
   /** member leaving a room. */
 
   leave(member) {
     this.members.delete(member);
-    this.players.delete(member.player);
-    console.log('member', this.players);
+    delete this.players[member.currentPlayer.player];
   }
 
   /** send message to all members in a room. */

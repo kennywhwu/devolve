@@ -4,6 +4,20 @@
 const Room = require('./Room');
 const axios = require('axios');
 
+const playerColorKey = [
+  'red',
+  'blue',
+  'green',
+  'yellow',
+  'tomato',
+  'purple',
+  'pink',
+  'black',
+  'brown',
+  'orange',
+  'magenta'
+];
+
 /** ChatUser is a individual connection from client -> server to chat. */
 
 class ChatUser {
@@ -27,49 +41,98 @@ class ChatUser {
     }
   }
 
+  /** Handle messages from client:
+   *
+   * - {type: "join", name: username} : join
+   * - {type: "chat", text: msg }     : chat
+   */
+
+  async handleMessage(jsonData) {
+    let msg = JSON.parse(jsonData);
+    // console.log('msg ', msg);
+    if (msg.type === 'join') {
+      this.handleJoin(msg);
+    } else if (msg.type === 'chat') {
+      this.handleChat(msg.text);
+    } else if (msg.type === 'joke') {
+      this.handleJoke(await this.makeJokeRequest());
+    } else if (msg.type === 'ready') {
+      this.handleReady(msg);
+    } else if (msg.type === 'start') {
+      this.handleStart(msg);
+    } else if (msg.type === 'keypress') {
+      this.handleKeyPress(msg);
+      console.log('handleMessage', msg);
+    } else if (msg.type === 'win') {
+      this.handleWin(msg);
+    } else if (msg.type === 'reset') {
+      this.handleReset(msg);
+    } else if (msg.type === 'exit') {
+      this.handleChangeExit(msg);
+    } else if (msg.type === 'current_state') {
+      // console.log('handleMessage', msg);
+      this.handleCurrentState(msg);
+    } else {
+      throw new Error(`bad message: ${msg.type}`);
+    }
+  }
+
   /** handle joining: add to room members, announce join */
 
   handleJoin(msg) {
-    // this.name = msg.name;
-    console.log(
-      `!this.room.players.has('playerBig')`,
-      !this.room.players.has('playerBig'),
-      this.room.players
-    );
-    if (this.room.members.size === 0) {
-      this.room.player = 0;
-      this.player = 'playerBig';
-    } else if (!this.room.players.has('playerBig')) {
-      this.player = 'playerBig';
+    if (this.room.members.size === 0 || !this.room.players['playerBig']) {
+      this.room.playerMarker = 1;
+      this.currentPlayer = {
+        player: 'playerBig',
+        color: playerColorKey[0],
+        isReady: false
+      };
+    } else {
+      while (this.room.players[`playerSmall${this.room.playerMarker}`]) {
+        this.room.playerMarker++;
+      }
+      this.currentPlayer = {
+        player: `playerSmall${this.room.playerMarker}`,
+        color: playerColorKey[this.room.playerMarker],
+        isReady: false
+      };
     }
-    // } else if (data.player === 3) {
-    //   this.player = 'playerSmall2';
-
-    // if (this.room.members.size === 0) {
-    //   this.room.player = 0;
-    // } else {
-    //   this.room.player++;
-    // }
-
-    // if (this.room.player === 0) {
-    //   this.player = 'playerBig';
-    // } else {
-    //   this.player = `playerSmall${this.room.player}`;
-    //   // } else if (data.player === 3) {
-    //   //   this.player = 'playerSmall2';
-    // }
+    console.log('this.currentPlayer, color', this.currentPlayer);
     this.room.join(this);
-    console.log('this.player', this.player);
+
     this.room.broadcast({
       type: 'other_join',
-      text: `${this.name} joined "${this.room.name}".`
+      player: this.currentPlayer,
+      playerList: this.room.players
     });
+    console.log('this.room.players', this.room.players);
 
     this.room.direct(this, {
       type: 'join',
       text: `${this.name} joined "${this.room.name}".`,
-      player: this.player,
-      state: msg.state
+      player: this.currentPlayer,
+      playerList: this.room.players
+    });
+  }
+
+  /** handle player ready: broadcast to room. */
+
+  handleReady(msg) {
+    console.log('handleReady ran');
+    this.room.ready(this);
+    this.room.broadcast({
+      playerList: this.room.players,
+      type: 'ready'
+    });
+  }
+
+  /** handle start game: broadcast to room. */
+
+  handleStart(msg) {
+    console.log('handleStart ran');
+    this.room.broadcast({
+      name: this.name,
+      type: 'start'
     });
   }
 
@@ -87,7 +150,7 @@ class ChatUser {
   handleKeyPress(msg) {
     console.log('handleKeyPress msg', msg);
     let key = { ...msg.key, player: msg.player };
-    // if (msg.key.player === this.player) {
+    // if (msg.key.player === this.currentPlayer) {
     this.room.broadcast({
       name: this.name,
       type: 'keypress',
@@ -101,7 +164,7 @@ class ChatUser {
   handleWin(msg) {
     this.room.broadcast({
       name: this.name,
-      player: this.player,
+      player: this.currentPlayer,
       type: 'win',
       win: msg.win
     });
@@ -111,7 +174,7 @@ class ChatUser {
   handleReset(msg) {
     this.room.broadcast({
       name: this.name,
-      player: this.player,
+      player: this.currentPlayer,
       type: 'reset'
     });
   }
@@ -119,35 +182,35 @@ class ChatUser {
   /** handle current state: broadcast to room. */
 
   handleCurrentState(msg) {
-    if (this.room.player >= this.room.members.size - 1) {
-      this.player = `playerSmall${this.room.members.size - 1}`;
-    } else if (this.room.player >= 0) {
-      this.room.player++;
-      let newPlayer = `playerSmall${this.room.player}`;
+    if (this.room.playerMarker >= this.room.members.size - 1) {
+      this.currentPlayer = `playerSmall${this.room.members.size - 1}`;
+    } else if (this.room.playerMarker >= 0) {
+      this.room.playerMarker++;
+      let newPlayer = `playerSmall${this.room.playerMarker}`;
       console.log('this.room.players', this.room.players, newPlayer);
       if (!this.room.players.has(newPlayer)) {
-        this.player = newPlayer;
+        this.currentPlayer = newPlayer;
       }
     } else {
-      this.player = 'playerBig';
+      this.currentPlayer = 'playerBig';
     }
 
-    // if (this.room.player >= this.room.members.size - 1) {
-    //   this.player = `playerSmall${this.room.members.size - 1}`;
-    // } else if (this.room.player >= 0) {
-    //   if (!this.room.players.has(this.player)) {
-    //     this.room.player++;
-    //     this.player = `playerSmall${this.room.player}`;
+    // if (this.room.playerMarker >= this.room.members.size - 1) {
+    //   this.currentPlayer = `playerSmall${this.room.members.size - 1}`;
+    // } else if (this.room.playerMarker >= 0) {
+    //   if (!this.room.players.has(this.currentPlayer)) {
+    //     this.room.playerMarker++;
+    //     this.currentPlayer = `playerSmall${this.room.playerMarker}`;
     //   }
     // } else {
-    //   this.player = 'playerBig';
+    //   this.currentPlayer = 'playerBig';
     // }
     this.room.join(this);
 
-    msg.state.currentPlayer = this.player;
+    msg.state.currentPlayer = this.currentPlayer;
     this.room.broadcast({
       name: this.name,
-      player: this.player,
+      player: this.currentPlayer,
       type: 'current_state',
       state: msg.state
     });
@@ -174,42 +237,10 @@ class ChatUser {
     }
     this.room.broadcast({
       name: this.name,
-      player: this.player,
+      player: this.currentPlayer,
       type: 'exit',
       exit: { y, x }
     });
-  }
-
-  /** Handle messages from client:
-   *
-   * - {type: "join", name: username} : join
-   * - {type: "chat", text: msg }     : chat
-   */
-
-  async handleMessage(jsonData) {
-    let msg = JSON.parse(jsonData);
-    // console.log('msg ', msg);
-    if (msg.type === 'join') {
-      this.handleJoin(msg);
-    } else if (msg.type === 'chat') {
-      this.handleChat(msg.text);
-    } else if (msg.type === 'joke') {
-      this.handleJoke(await this.makeJokeRequest());
-    } else if (msg.type === 'keypress') {
-      this.handleKeyPress(msg);
-      console.log('handleMessage', msg);
-    } else if (msg.type === 'win') {
-      this.handleWin(msg);
-    } else if (msg.type === 'reset') {
-      this.handleReset(msg);
-    } else if (msg.type === 'exit') {
-      this.handleChangeExit(msg);
-    } else if (msg.type === 'current_state') {
-      // console.log('handleMessage', msg);
-      this.handleCurrentState(msg);
-    } else {
-      throw new Error(`bad message: ${msg.type}`);
-    }
   }
 
   /** Connection was closed: leave room, announce exit to others */
@@ -217,9 +248,11 @@ class ChatUser {
   handleClose() {
     console.log('handleClose');
     this.room.leave(this);
+    this.room.playerMarker = 1;
     this.room.broadcast({
-      type: 'note',
-      text: `${this.name} left ${this.room.name}.`
+      type: 'leave',
+      leftPlayer: this.currentPlayer,
+      playerList: this.room.players
     });
   }
 
