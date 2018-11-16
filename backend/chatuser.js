@@ -67,6 +67,8 @@ class ChatUser {
       this.handleWin(msg);
     } else if (msg.type === 'reset') {
       this.handleReset(msg);
+    } else if (msg.type === 'lobby') {
+      this.handleLobby(msg);
     } else if (msg.type === 'exit') {
       this.handleChangeExit(msg);
     } else if (msg.type === 'current_state') {
@@ -176,6 +178,17 @@ class ChatUser {
       name: this.name,
       player: this.currentPlayer,
       type: 'reset'
+    });
+  }
+
+  /** handle return to lobby: broadcast to room. */
+
+  handleLobby(msg) {
+    console.log('handleLobby', msg);
+    this.room.broadcast({
+      name: this.name,
+      player: this.currentPlayer,
+      type: 'lobby'
     });
   }
 

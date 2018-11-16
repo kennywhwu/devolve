@@ -68,6 +68,7 @@ class Board extends Component {
     this.stopGame = this.stopGame.bind(this);
     // this.resetGame = this.resetGame.bind(this);
     this.handleResetButton = this.handleResetButton.bind(this);
+    this.handleLobbyButton = this.handleLobbyButton.bind(this);
     window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
   }
 
@@ -118,8 +119,12 @@ class Board extends Component {
         this.resetGame();
       }
 
+      if (data.type === 'lobby') {
+        console.log('lobby');
+        this.props.handleLobby();
+      }
+
       if (data.type === 'exit') {
-        console.log('exit');
         this.setState({ exit: { y: data.exit.y, x: data.exit.x } });
       }
     };
@@ -137,9 +142,9 @@ class Board extends Component {
   //   }
   // }
 
-  // componentWillUnmount() {
-  //   this.connection.send(JSON.stringify({ type: 'close' }));
-  // }
+  componentWillUnmount() {
+    this.stopTimer();
+  }
 
   ///////////////////////
   /// INITIALIZE GAME ///
@@ -620,6 +625,17 @@ class Board extends Component {
     // this.resetGame();
   }
 
+  handleLobbyButton() {
+    this.props.connection.send(
+      JSON.stringify({
+        name: this.name,
+        player: this.player,
+        type: 'lobby'
+      })
+    );
+    // this.resetGame();
+  }
+
   // Stop game
   stopGame() {
     this.stopTimer();
@@ -788,12 +804,20 @@ class Board extends Component {
         {results}
         {endResult}
         {this.state.firstKeyPress ? (
-          <button
-            className="btn btn-warning my-3"
-            onClick={this.handleResetButton}
-          >
-            Restart the Chase
-          </button>
+          <div>
+            <button
+              className="btn btn-warning my-3"
+              onClick={this.handleResetButton}
+            >
+              Restart the Chase
+            </button>
+            {/* <button
+              className="btn btn-danger my-3"
+              onClick={this.handleLobbyButton}
+            >
+              Return to Lobby
+            </button> */}
+          </div>
         ) : (
           undefined
         )}

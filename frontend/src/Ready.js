@@ -62,11 +62,7 @@ class Ready extends Component {
         )}
 
         {!this.props.playersReady ? (
-          <button
-            className="start-button btn btn-success btn-lg my-3"
-            onClick={this.props.handleStart}
-            disabled
-          >
+          <button className="start-button btn btn-success btn-lg my-3" disabled>
             Start the Chase
           </button>
         ) : (

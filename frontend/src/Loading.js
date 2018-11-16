@@ -18,6 +18,7 @@ class Loading extends Component {
     };
     this.handleStart = this.handleStart.bind(this);
     this.handleReady = this.handleReady.bind(this);
+    this.handleLobby = this.handleLobby.bind(this);
   }
 
   componentDidMount() {
@@ -51,7 +52,8 @@ class Loading extends Component {
           if (
             Object.values(this.state.playerList)
               .map(player => player.isReady)
-              .every(e => e === true)
+              .every(e => e === true) &&
+            Object.values(this.state.playerList).length > 1
           ) {
             this.setState({ playersReady: true });
           } else {
@@ -81,6 +83,10 @@ class Loading extends Component {
     );
   }
 
+  handleLobby() {
+    this.setState({ gameReady: false });
+  }
+
   render() {
     return (
       <div className="Loading">
@@ -98,13 +104,14 @@ class Loading extends Component {
               />
             ) : (
               <Board
-                xDimension={20}
-                yDimension={20}
+                xDimension={10 + 2 * Object.keys(this.state.playerList).length}
+                yDimension={10 + 2 * Object.keys(this.state.playerList).length}
                 players={{
                   big: 1,
                   small: Object.keys(this.state.playerList).length - 1
                 }}
                 currentPlayer={this.state.currentPlayer}
+                handleLobby={this.handleLobby}
                 connection={this.connection}
               />
             )}
