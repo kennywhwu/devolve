@@ -9,6 +9,7 @@ import './Board.css';
 import PlayerSmall from './PlayerSmall';
 import PlayerBig from './PlayerBig';
 import keyDict from './keyDictionary';
+import uuid from 'uuid/v4';
 
 /////////////////
 /// CONSTANTS ///
@@ -25,24 +26,15 @@ const playerColorKey = [
   'black',
   'brown',
   'orange',
-  'magenta'
+  'magenta',
 ];
 
 // Constant game factors
 const BORDER_SIZE = 1;
-const GROWTH_RATE = 0;
+
 const EXIT_RATE = 5;
 
 let setTimerFunction;
-
-//////////////////
-/// WEBSOCKETS ///
-//////////////////
-
-/** Client-side of websocket. */
-
-// const urlParts = document.URL.split('/');
-// const roomName = urlParts[urlParts.length - 1];
 
 ///////////////////
 /// BOARD CLASS ///
@@ -53,7 +45,6 @@ class Board extends Component {
     super(props);
     this.state = {
       board: this.createBoard(),
-      // currentPlayer: null,
       players: this.createPlayerList(),
       eatenPlayers: [],
       escapedPlayers: [],
@@ -62,11 +53,12 @@ class Board extends Component {
       firstKeyPress: false,
       results: [],
       exit: { y: 1, x: 14 },
-      isLoading: true
+      isLoading: true,
+      touchCount: 0,
     };
+    this.GROWTH_RATE = 15 - this.props.players.small;
     this.decodeKeyBoardEvent = this.decodeKeyBoardEvent.bind(this);
     this.stopGame = this.stopGame.bind(this);
-    // this.resetGame = this.resetGame.bind(this);
     this.handleResetButton = this.handleResetButton.bind(this);
     this.handleLobbyButton = this.handleLobbyButton.bind(this);
     window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
@@ -74,75 +66,45 @@ class Board extends Component {
 
   static defaultProps = {
     xDimension: 15,
-    yDimension: 15
+    yDimension: 15,
   };
 
-  // When component mounts, create and open new websocket, prompt user names and player types, and listen for incoming messages from server
+  // When component mounts, prompt user names and player types, and listen for incoming messages from server
   componentDidMount() {
-    // this.connection = new WebSocket(`ws://localhost:3005/devolve/${roomName}`);
-    // this.connection = new WebSocket(
-    //   `ws://192.168.1.175:3005/devolve/${roomName}`
-    // );
-    // 192.168.1.175
-
-    // this.name = prompt('Username?', 'Kenny');
-    // this.player = prompt('Player?', 'playerSmall1');
-
-    // this.connection.onopen = evt => {
-    //   let data = { type: 'join', state: this.state };
-    //   this.connection.send(JSON.stringify(data));
-    // };
-
-    // this.connection.onopen = evt => {
-    //   let data = { type: 'join', name: this.name, player: this.player };
-    //   this.connection.send(JSON.stringify(data));
-    // };
-
     // listen to onmessage event
     this.props.connection.onmessage = evt => {
       let data = JSON.parse(evt.data);
 
       // If incoming message is keypress, then invoke registerKeyPress function
       if (data.type === 'keypress') {
+        // console.log('this returned keypress', data.id);
+        // console.log(
+        //   'these are player coordinates',
+        //   this.state.players.playerSmall1.coordinates
+        // );
         this.registerKeyPress(data.key);
-        // add the new message to state
-        // this.setState(data.state);
       }
-      // if (data.type === 'win') {
-      //   console.log('this.state.eatenPlayers', this.state.eatenPlayers);
-      //   console.log('this.state.escapedPlayers', this.state.escapedPlayers);
-      //   this.setState({ win: data.win });
-      // }
-
-      // If incoming message is keypress, then invoke registerKeyPress function
+      // If incoming message is reset, then invoke resetGame function
       if (data.type === 'reset') {
+        console.log('reset received');
         this.resetGame();
       }
 
+      // If incoming message is lobby, then invoke passed-in handleLobby function
       if (data.type === 'lobby') {
         console.log('lobby');
         this.props.handleLobby();
       }
 
+      // If incoming message is exit, then set exit state based on retrieved exit coordinates
       if (data.type === 'exit') {
         this.setState({ exit: { y: data.exit.y, x: data.exit.x } });
       }
     };
   }
 
-  // componentDidUpdate() {
-  //   if (this.state.win !== false) {
-  //     this.connection.send(
-  //       JSON.stringify({
-  //         name: this.name,
-  //         type: 'win',
-  //         win: this.state.win
-  //       })
-  //     );
-  //   }
-  // }
-
   componentWillUnmount() {
+    // Stop timer when game is over/resets
     this.stopTimer();
   }
 
@@ -185,7 +147,7 @@ class Board extends Component {
         // already bound to class, so can't use this.size
         // ie. position: ()=>this.setPlayerPosition(0,this.props.xDimension-playerObj.size)
         position,
-        coordinates
+        coordinates,
       };
       playerList.playerBig = playerObj;
     }
@@ -209,7 +171,7 @@ class Board extends Component {
         moveReady: true,
         delay: 0,
         position,
-        coordinates
+        coordinates,
       };
       playerList[`playerSmall${i + 1}`] = playerObj;
     }
@@ -225,7 +187,7 @@ class Board extends Component {
     let position = Array.from({ length: size }).map((e1, i1) =>
       Array.from({ length: size }).map((e2, i2) => ({
         y: initialY + i1,
-        x: initialX + i2
+        x: initialX + i2,
       }))
     );
 
@@ -257,17 +219,17 @@ class Board extends Component {
         name: this.name,
         player: this.props.currentPlayer.player,
         type: 'keypress',
-        key: keyDef
+        key: keyDef,
+        id: uuid(),
       })
     );
-    this.registerKeyPress(this.keyDef);
   }
 
   // Call action based on keypress
   registerKeyPress(keyDef) {
     if (keyDef !== undefined && keyDef.player in this.state.players) {
       if (keyDef.type === 'movement') {
-        this.moveDelay(keyDef.player, keyDef.action);
+        this.movePlayer(keyDef.player, keyDef.action);
       }
       if (!this.state.firstKeyPress) {
         this.setState({ firstKeyPress: true });
@@ -281,6 +243,8 @@ class Board extends Component {
   ////////////////
 
   // Set delay on player movement
+  // Causes delays over websockets
+
   async moveDelay(player, direction) {
     let setReadyState = function(st) {
       return {
@@ -288,20 +252,44 @@ class Board extends Component {
           ...st.players,
           [player]: {
             ...st.players[player],
-            moveReady: !st.players[player].moveReady
-          }
-        }
+            moveReady: !st.players[player].moveReady,
+          },
+        },
       };
     };
 
     if (this.state.players[player].moveReady) {
+      this.movePlayer(player, direction);
       this.setState(st => setReadyState(st));
       await setTimeout(() => {
         this.setState(st => setReadyState(st));
-        this.movePlayer(player, direction);
       }, this.state.players[player].delay);
     }
   }
+  // // Set delay on player movement
+  // // Seems to be causing delays over websockets
+
+  // async moveDelay(player, direction) {
+  //   let setReadyState = function(st) {
+  //     return {
+  //       players: {
+  //         ...st.players,
+  //         [player]: {
+  //           ...st.players[player],
+  //           moveReady: !st.players[player].moveReady,
+  //         },
+  //       },
+  //     };
+  //   };
+
+  //   if (this.state.players[player].moveReady) {
+  //     this.setState(st => setReadyState(st));
+  //     await setTimeout(() => {
+  //       this.setState(st => setReadyState(st));
+  //       this.movePlayer(player, direction);
+  //     }, this.state.players[player].delay);
+  //   }
+  // }
 
   // movement based on direction pressed
   // 'up' moves player [y-1, 0]
@@ -330,21 +318,6 @@ class Board extends Component {
     let minCorner = position[0][0];
     let maxCorner = position[size - 1][size - 1];
 
-    // if (
-    //   minCorner.x + xChange >= BORDER_SIZE &&
-    //   maxCorner.x + xChange < this.props.xDimension - BORDER_SIZE &&
-    //   minCorner.y + yChange >= BORDER_SIZE &&
-    //   maxCorner.y + yChange < this.props.yDimension - BORDER_SIZE
-    // ) {
-    //   // Only need if planning on making one Cell Component that takes in board value 0/1/2 and renders players
-    //   // board[newY][newX] = 2;
-    //   // board[y][x] = 0;
-
-    //   playerNewPosition = position.map(e1 =>
-    //     e1.map(e2 => ({ y: e2.y + yChange, x: e2.x + xChange }))
-    //   );
-    // }
-
     if (
       this.checkAllBounds(
         minCorner.x + xChange,
@@ -368,25 +341,6 @@ class Board extends Component {
       playerNewPosition
     );
 
-    // // Check win conditions
-    // if (player !== 'playerBig') {
-    //   for (let item of coordObj.playerBig) {
-    //     if (coordObj[player].has(item)) {
-    //       bigWin = true;
-    //     }
-    //   }
-    // } else {
-    //   for (let playercoord in coordObj) {
-    //     if (playercoord !== 'playerBig') {
-    //       for (let item of coordObj[`${playercoord}`]) {
-    //         if (coordObj.playerBig.has(item)) {
-    //           bigWin = true;
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-
     // Set changedState object based on player, to later set state
     let changedState = {
       players: {
@@ -397,10 +351,10 @@ class Board extends Component {
           coordinates: this.setPlayerCoordinates(
             playerList[player].size,
             playerNewPosition
-          )
-        }
+          ),
+        },
       },
-      board
+      board,
     };
 
     // Change state
@@ -418,30 +372,13 @@ class Board extends Component {
 
   // Change exit location
   changeExit() {
-    // let y;
-    // let x;
-
-    // if (Math.random() < 0.25) {
-    //   y = 0;
-    //   x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
-    // } else if (Math.random() < 0.25) {
-    //   y = this.props.yDimension - 1;
-    //   x = Math.floor(Math.random() * (this.props.xDimension - 2)) + 1;
-    // } else if (Math.random() < 0.25) {
-    //   y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
-    //   x = 0;
-    // } else {
-    //   y = Math.floor(Math.random() * (this.props.yDimension - 2)) + 1;
-    //   x = this.props.xDimension - 1;
-    // }
-
     if (this.props.currentPlayer.player === 'playerBig') {
       this.props.connection.send(
         JSON.stringify({
           name: this.name,
           player: this.player,
           type: 'exit',
-          dimensions: { y: this.props.yDimension, x: this.props.xDimension }
+          dimensions: { y: this.props.yDimension, x: this.props.xDimension },
         })
       );
     }
@@ -452,7 +389,8 @@ class Board extends Component {
     let counter = 1;
     let growPlayerBig = st => {
       let size =
-          st.players.playerBig.size + (counter % GROWTH_RATE === 0 ? 1 : 0),
+          st.players.playerBig.size +
+          (counter % this.GROWTH_RATE === 0 ? 1 : 0),
         currPos = st.players.playerBig.position,
         initialX = currPos[0][0].x,
         initialY = currPos[0][0].y;
@@ -481,9 +419,9 @@ class Board extends Component {
             ...st.players.playerBig,
             size,
             position,
-            coordinates
-          }
-        }
+            coordinates,
+          },
+        },
       };
     };
     setTimerFunction = setInterval(() => {
@@ -503,7 +441,7 @@ class Board extends Component {
     let counter = 1;
     setTimerFunction = setInterval(() => {
       this.setState({
-        timer: counter
+        timer: counter,
       });
       counter++;
     }, 1000);
@@ -562,7 +500,7 @@ class Board extends Component {
             this.setState(st => ({
               players: playerList,
               eatenPlayers: [...st.eatenPlayers, { player, color }],
-              results: [...st.results, { player, color, outcome: 'eaten' }]
+              results: [...st.results, { player, color, outcome: 'eaten' }],
             }));
           }
         }
@@ -585,7 +523,7 @@ class Board extends Component {
             this.setState(st => ({
               players: playerList,
               escapedPlayers: [...st.escapedPlayers, { player, color }],
-              results: [...st.results, { player, color, outcome: 'escaped' }]
+              results: [...st.results, { player, color, outcome: 'escaped' }],
             }));
           }
         }
@@ -619,10 +557,9 @@ class Board extends Component {
       JSON.stringify({
         name: this.name,
         player: this.player,
-        type: 'reset'
+        type: 'reset',
       })
     );
-    // this.resetGame();
   }
 
   handleLobbyButton() {
@@ -630,10 +567,9 @@ class Board extends Component {
       JSON.stringify({
         name: this.name,
         player: this.player,
-        type: 'lobby'
+        type: 'lobby',
       })
     );
-    // this.resetGame();
   }
 
   // Stop game
@@ -653,7 +589,7 @@ class Board extends Component {
       win: false,
       timer: 0,
       firstKeyPress: false,
-      results: []
+      results: [],
     };
     this.setState(defaultState, () => console.log(this.state));
     window.document.addEventListener('keydown', this.decodeKeyBoardEvent);
@@ -772,7 +708,7 @@ class Board extends Component {
     });
 
     let endResult;
-    if (this.state.win === 'big') {
+    if (this.state.win === 'big' && this.props.players.small > 1) {
       endResult = (
         <h1>
           Y'ALL got eaten by the <span style={{ color: 'red' }}>BEAST!!!</span>
@@ -801,6 +737,41 @@ class Board extends Component {
           <tbody>{tblBoard}</tbody>
         </table>
         <h1>{this.state.timer}</h1>
+        <img
+          id="up-arrow"
+          className="arrow"
+          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/up-arrow.png"
+          alt="up-arrow"
+          width="35"
+          onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowUp' })}
+        />
+        <br />
+        <img
+          id="left-arrow"
+          className="arrow"
+          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/left-arrow.png"
+          alt="left-arrow"
+          width="35"
+          onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowLeft' })}
+        />
+        <span width="35" />
+        <img
+          id="right-arrow"
+          className="arrow"
+          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/right-arrow.png"
+          alt="right-arrow"
+          width="35"
+          onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowRight' })}
+        />
+        <br />
+        <img
+          id="down-arrow"
+          className="arrow"
+          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/down-arrow.png"
+          alt="down-arrow"
+          width="35"
+          onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowDown' })}
+        />
         {results}
         {endResult}
         {this.state.firstKeyPress ? (

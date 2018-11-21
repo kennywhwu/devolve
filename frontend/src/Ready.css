@@ -1,6 +1,7 @@
 #title {
   font-family: 'Allerta Stencil', 'sans-serif';
-  font-size: 5em;
+  font-size: 2.7em;
+  text-shadow: 5px 5px 3px gray;
 }
 
 body {

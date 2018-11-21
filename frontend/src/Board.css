@@ -7,3 +7,19 @@ table {
   margin: auto;
   border-collapse: collapse;
 }
+
+.arrow {
+  margin-right: 20px;
+  margin-left: 20px;
+}
+#up-arrow {
+  vertical-align: bottom;
+}
+#down-arrow {
+  vertical-align: top;
+}
+
+br {
+  margin-bottom: 0px;
+  margin-top: 0px;
+}

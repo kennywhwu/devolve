@@ -14,7 +14,7 @@ class Loading extends Component {
       gameReady: false,
       playersReady: false,
       currentPlayer: { player: '', color: '' },
-      playerList: {}
+      playerList: {},
     };
     this.handleStart = this.handleStart.bind(this);
     this.handleReady = this.handleReady.bind(this);
@@ -22,15 +22,15 @@ class Loading extends Component {
   }
 
   componentDidMount() {
-    this.connection = new WebSocket(
-      `ws://192.168.1.175:3005/devolve/${roomName}`
-    );
+    // Set up new websocket
+    this.connection = new WebSocket(`ws://192.168.1.107:3005/${roomName}`);
 
+    // On open, send join data to server
     this.connection.onopen = evt => {
-      let data = { type: 'join' };
-      this.connection.send(JSON.stringify(data));
+      this.connection.send(JSON.stringify({ type: 'join' }));
     };
 
+    // On receiving signal from
     this.connection.onmessage = evt => {
       let data = JSON.parse(evt.data);
 
@@ -38,7 +38,7 @@ class Loading extends Component {
         this.setState({
           currentPlayer: data.player,
           playerList: data.playerList,
-          isLoading: false
+          isLoading: false,
         });
       }
       if (data.type === 'other_join') {
@@ -70,7 +70,7 @@ class Loading extends Component {
   handleReady() {
     this.connection.send(
       JSON.stringify({
-        type: 'ready'
+        type: 'ready',
       })
     );
   }
@@ -78,7 +78,7 @@ class Loading extends Component {
   handleStart() {
     this.connection.send(
       JSON.stringify({
-        type: 'start'
+        type: 'start',
       })
     );
   }
@@ -108,7 +108,7 @@ class Loading extends Component {
                 yDimension={10 + 2 * Object.keys(this.state.playerList).length}
                 players={{
                   big: 1,
-                  small: Object.keys(this.state.playerList).length - 1
+                  small: Object.keys(this.state.playerList).length - 1,
                 }}
                 currentPlayer={this.state.currentPlayer}
                 handleLobby={this.handleLobby}

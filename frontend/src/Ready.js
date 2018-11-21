@@ -34,14 +34,22 @@ class Ready extends Component {
         </h1>
         <h1 className="join-notice my-3">
           You are{' '}
-          <span style={{ color: currentPlayer.color }}>
-            {currentPlayer.player === 'playerBig' ? (
-              <span>THE BEAST</span>
-            ) : (
-              <span>{currentPlayer.color.toUpperCase()}</span>
-            )}
-          </span>
+          {currentPlayer.player === 'playerBig' ? (
+            <span>
+              <span style={{ color: currentPlayer.color }}>THE BEAST</span>
+              <h4>Chase down your prey!</h4>
+            </span>
+          ) : (
+            <span>
+              <span style={{ color: currentPlayer.color }}>
+                {currentPlayer.color.toUpperCase()}
+              </span>
+              <h4>Escape from THE BEAST!</h4>
+            </span>
+          )}
         </h1>
+
+        <h4>All players must be ready before game can start</h4>
 
         {joinList}
 

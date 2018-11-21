@@ -24,7 +24,7 @@ const ChatUser = require('./chatuser');
  * The `ws.send` method is how we'll send messages back to that socket.
  */
 
-app.ws('/devolve/:roomName', function(ws, req, next) {
+app.ws('/:roomName', function(ws, req, next) {
   try {
     const user = new ChatUser(
       ws.send.bind(ws), // fn to call to message this user

@@ -8,14 +8,14 @@ const playerColorKey = [
   'red',
   'blue',
   'green',
-  'yellow',
+  'gold',
   'tomato',
   'purple',
   'pink',
   'black',
   'brown',
   'orange',
-  'magenta'
+  'magenta',
 ];
 
 /** ChatUser is a individual connection from client -> server to chat. */
@@ -62,7 +62,6 @@ class ChatUser {
       this.handleStart(msg);
     } else if (msg.type === 'keypress') {
       this.handleKeyPress(msg);
-      console.log('handleMessage', msg);
     } else if (msg.type === 'win') {
       this.handleWin(msg);
     } else if (msg.type === 'reset') {
@@ -87,7 +86,7 @@ class ChatUser {
       this.currentPlayer = {
         player: 'playerBig',
         color: playerColorKey[0],
-        isReady: false
+        isReady: false,
       };
     } else {
       while (this.room.players[`playerSmall${this.room.playerMarker}`]) {
@@ -96,7 +95,7 @@ class ChatUser {
       this.currentPlayer = {
         player: `playerSmall${this.room.playerMarker}`,
         color: playerColorKey[this.room.playerMarker],
-        isReady: false
+        isReady: false,
       };
     }
     console.log('this.currentPlayer, color', this.currentPlayer);
@@ -105,7 +104,7 @@ class ChatUser {
     this.room.broadcast({
       type: 'other_join',
       player: this.currentPlayer,
-      playerList: this.room.players
+      playerList: this.room.players,
     });
     console.log('this.room.players', this.room.players);
 
@@ -113,7 +112,7 @@ class ChatUser {
       type: 'join',
       text: `${this.name} joined "${this.room.name}".`,
       player: this.currentPlayer,
-      playerList: this.room.players
+      playerList: this.room.players,
     });
   }
 
@@ -124,7 +123,7 @@ class ChatUser {
     this.room.ready(this);
     this.room.broadcast({
       playerList: this.room.players,
-      type: 'ready'
+      type: 'ready',
     });
   }
 
@@ -134,7 +133,7 @@ class ChatUser {
     console.log('handleStart ran');
     this.room.broadcast({
       name: this.name,
-      type: 'start'
+      type: 'start',
     });
   }
 
@@ -144,9 +143,10 @@ class ChatUser {
     this.room.broadcast({
       name: this.name,
       type: 'chat',
-      text: text
+      text: text,
     });
   }
+
   /** handle a keypress: broadcast to room. */
 
   handleKeyPress(msg) {
@@ -157,10 +157,12 @@ class ChatUser {
       name: this.name,
       type: 'keypress',
       // state: msg.state,
-      key
+      key,
+      id: msg.id,
     });
     // }
   }
+
   /** handle win: broadcast to room. */
 
   handleWin(msg) {
@@ -168,7 +170,7 @@ class ChatUser {
       name: this.name,
       player: this.currentPlayer,
       type: 'win',
-      win: msg.win
+      win: msg.win,
     });
   }
   /** handle reset: broadcast to room. */
@@ -177,7 +179,7 @@ class ChatUser {
     this.room.broadcast({
       name: this.name,
       player: this.currentPlayer,
-      type: 'reset'
+      type: 'reset',
     });
   }
 
@@ -188,44 +190,7 @@ class ChatUser {
     this.room.broadcast({
       name: this.name,
       player: this.currentPlayer,
-      type: 'lobby'
-    });
-  }
-
-  /** handle current state: broadcast to room. */
-
-  handleCurrentState(msg) {
-    if (this.room.playerMarker >= this.room.members.size - 1) {
-      this.currentPlayer = `playerSmall${this.room.members.size - 1}`;
-    } else if (this.room.playerMarker >= 0) {
-      this.room.playerMarker++;
-      let newPlayer = `playerSmall${this.room.playerMarker}`;
-      console.log('this.room.players', this.room.players, newPlayer);
-      if (!this.room.players.has(newPlayer)) {
-        this.currentPlayer = newPlayer;
-      }
-    } else {
-      this.currentPlayer = 'playerBig';
-    }
-
-    // if (this.room.playerMarker >= this.room.members.size - 1) {
-    //   this.currentPlayer = `playerSmall${this.room.members.size - 1}`;
-    // } else if (this.room.playerMarker >= 0) {
-    //   if (!this.room.players.has(this.currentPlayer)) {
-    //     this.room.playerMarker++;
-    //     this.currentPlayer = `playerSmall${this.room.playerMarker}`;
-    //   }
-    // } else {
-    //   this.currentPlayer = 'playerBig';
-    // }
-    this.room.join(this);
-
-    msg.state.currentPlayer = this.currentPlayer;
-    this.room.broadcast({
-      name: this.name,
-      player: this.currentPlayer,
-      type: 'current_state',
-      state: msg.state
+      type: 'lobby',
     });
   }
 
@@ -252,7 +217,7 @@ class ChatUser {
       name: this.name,
       player: this.currentPlayer,
       type: 'exit',
-      exit: { y, x }
+      exit: { y, x },
     });
   }
 
@@ -265,13 +230,13 @@ class ChatUser {
     this.room.broadcast({
       type: 'leave',
       leftPlayer: this.currentPlayer,
-      playerList: this.room.players
+      playerList: this.room.players,
     });
   }
 
   async makeJokeRequest() {
     let response = await axios.get('https://icanhazdadjoke.com/', {
-      headers: { accept: 'application/json' }
+      headers: { accept: 'application/json' },
     });
     return response.data.joke;
   }
@@ -280,7 +245,7 @@ class ChatUser {
     this.display({
       name: this.name,
       type: 'chat',
-      text: joke
+      text: joke,
     });
   }
 
