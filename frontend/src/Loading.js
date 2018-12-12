@@ -3,6 +3,11 @@ import React, { Component } from 'react';
 import Board from './Board';
 import Ready from './Ready';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3005';
+const WEBSOCKET_URL =
+  BASE_URL.substring(0, 5) === 'https'
+    ? BASE_URL.replace(/^https/, 'ws')
+    : BASE_URL.replace(/^http/, 'ws');
 const urlParts = document.URL.split('/');
 const roomName = urlParts[urlParts.length - 1] || 'game';
 
@@ -25,7 +30,8 @@ class Loading extends Component {
     // Set up new websocket
     this.connection = new WebSocket(
       // `ws://localhost:3005/${roomName}`
-      `ws://devolve-backend.herokuapp.com/${roomName}`
+      `${WEBSOCKET_URL}/${roomName}`
+      // `${BASE_URL}/${roomName}`
     );
     console.log('this.connection', this.connection);
     // On open, send join data to server
