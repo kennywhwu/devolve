@@ -4,7 +4,7 @@ import Board from './Board';
 import Ready from './Ready';
 
 const urlParts = document.URL.split('/');
-const roomName = urlParts[urlParts.length - 1];
+const roomName = urlParts[urlParts.length - 1] || 'game';
 
 class Loading extends Component {
   constructor(props) {
@@ -23,7 +23,10 @@ class Loading extends Component {
 
   componentDidMount() {
     // Set up new websocket
-    this.connection = new WebSocket(`ws://devolve.herokuapp.com/${roomName}`);
+    this.connection = new WebSocket(
+      // `ws://localhost:3005/${roomName}`
+      `ws://devolve-backend.herokuapp.com/${roomName}`
+    );
     console.log('this.connection', this.connection);
     // On open, send join data to server
     this.connection.onopen = evt => {

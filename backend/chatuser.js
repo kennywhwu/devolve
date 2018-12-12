@@ -1,7 +1,7 @@
 /** Functionality related to chatting. */
 
 // Room is an abstraction of a chat channel
-const Room = require('./Room');
+const Room = require('./room');
 const axios = require('axios');
 
 const playerColorKey = [
