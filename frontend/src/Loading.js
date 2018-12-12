@@ -6,7 +6,7 @@ import Ready from './Ready';
 const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3005';
 const WEBSOCKET_URL =
   BASE_URL.substring(0, 5) === 'https'
-    ? BASE_URL.replace(/^https/, 'ws')
+    ? BASE_URL.replace(/^https/, 'wss')
     : BASE_URL.replace(/^http/, 'ws');
 const urlParts = document.URL.split('/');
 const roomName = urlParts[urlParts.length - 1] || 'game';
