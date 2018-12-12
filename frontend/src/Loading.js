@@ -23,10 +23,11 @@ class Loading extends Component {
 
   componentDidMount() {
     // Set up new websocket
-    this.connection = new WebSocket(`ws://192.168.1.107:3005/${roomName}`);
-
+    this.connection = new WebSocket(`ws://devolve.herokuapp.com/${roomName}`);
+    console.log('this.connection', this.connection);
     // On open, send join data to server
     this.connection.onopen = evt => {
+      console.log('open occurred');
       this.connection.send(JSON.stringify({ type: 'join' }));
     };
 

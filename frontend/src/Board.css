@@ -1,3 +1,7 @@
+body {
+  touch-action: manipulation;
+}
+
 .cell {
   width: 20px;
   height: 20px;
