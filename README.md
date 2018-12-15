@@ -2,8 +2,7 @@
 
 Devolve is an asymmetric multiplayer game built with [React](http://www.reactjs.org) and [Node.js](https://nodejs.org) over [websockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 
-![Alt text](/relative/path/to/devolve_readme1.png?raw=true 'Optional Title')
-![Alt text](/devolve_readme1.png?raw=true 'Optional Title')
+![Devolve Snapshot](/devolve_readme1.png?raw=true 'Devolve Snapshot')
 
 ## Prerequisites
 
@@ -55,9 +54,13 @@ http://localhost:3000/new-game
 
 As players join the server, they enter the lobby. All players in the lobby must indicate readiness by clicking on "Ready" button. Once all players are ready, the game can start by clicking "Start the Chase" button.
 
-####B oard
+![Devolve Lobby](/devolve_readme1.gif?raw=true 'Devolve Lobby')
+
+#### Board
 
 The game board is set with uncrossable borders. The board size grows proportional to the number of players in the game. An exit will randomly generate periodically for players to escape through.
+
+![Devolve Play](/devolve_readme2.gif?raw=true 'Devolve Play')
 
 #### Beast
 
