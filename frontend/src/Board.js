@@ -19,7 +19,7 @@ import uuid from 'uuid/v4';
 const playerColorKey = [
   'blue',
   'green',
-  'yellow',
+  'gold',
   'tomato',
   'purple',
   'pink',

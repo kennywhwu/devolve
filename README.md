@@ -1,44 +1,80 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Devolve
 
-## Available Scripts
+Devolve is an asymmetric multiplayer game built with [React](http://www.reactjs.org) and [Node.js](https://nodejs.org) over [websockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 
-In the project directory, you can run:
+![Alt text](/relative/path/to/devolve_readme1.png?raw=true 'Optional Title')
+![Alt text](/devolve_readme1.png?raw=true 'Optional Title')
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The game requires a backend server, on which the client will connect to through websockets.
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+From cloned repo folder, navigate to /backend folder and install dependencies:
 
-### `npm test`
+```
+cd backend
+npm install
+```
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Start up node server:
 
-### `npm run build`
+```
+nodemon server.js
+```
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+On separate terminal window, navigate to /frontend folder and install client-side dependencies:
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+```
+cd frontend
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Start up frontend React server:
 
-### `npm run eject`
+```
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+App should start running with client-side connecting to backend. Open up multiple tabs to simulate multiple players entering game.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+App is playable on mobile; however it is not optimized for fair play, as mobile players have to continuously tap on arrow buttons while computer players have the advantage of holding movement keys down.
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Game Description
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Starting a game
 
-## Learn More
+Devolve is intended to be a multiplayer experience, and therefore requires at least 2 clients (or multiple tabs) to access the server before the game can start.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+A new instance of the game can be started by adding a different endpoint to the URL (so multiple games can be played from same app). Example:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+http://localhost:3000/new-game
+```
+
+#### Lobby
+
+As players join the server, they enter the lobby. All players in the lobby must indicate readiness by clicking on "Ready" button. Once all players are ready, the game can start by clicking "Start the Chase" button.
+
+####B oard
+
+The game board is set with uncrossable borders. The board size grows proportional to the number of players in the game. An exit will randomly generate periodically for players to escape through.
+
+#### Beast
+
+One player represents "The Beast," who is larger and will continue to grow at a constant rate depending on the number of players in the game. The Beast's goal is to chase down and eat other players by colliding with them.
+
+#### Prey
+
+The other players are the Beast's prey and are trying to avoid it and escape through the exit.
+
+## Future Features
+
+Future versions are planned to add following features:
+
+- Optimize for mobile play; enable continuous hold on arrow buttons to move player
+- Enable button to return from in-progress game back to lobby
+- Randomize player assignment each time new game is started
+- Set delay on Beast to slow down movement
+- Hide exit from Beast player
+- Implement usernames and chatting
+- Allow for players in lobby to vote to kick out a hanging client and start game

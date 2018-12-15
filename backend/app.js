@@ -1,4 +1,4 @@
-/** app for groupchat */
+/** app for devolve */
 
 const express = require('express');
 app = express();
@@ -8,25 +8,16 @@ app = express();
 app.use(express.static('static/'));
 const path = require('path');
 
-/** Handle websocket chat */
+/** Handle websocket */
 
 // allow for app.ws routes for websocket routes
 const wsExpress = require('express-ws')(app);
 
-const ChatUser = require('./chatuser');
-
-/** Handle a persistent connection to /chat/[roomName]
- *
- * Note that this is only called *once* per client --- not every time
- * a particular websocket chat is sent.
- *
- * `ws` becomes the socket for the client; it is specific to that visitor.
- * The `ws.send` method is how we'll send messages back to that socket.
- */
+const Player = require('./player');
 
 app.ws('/:roomName', function(ws, req, next) {
   try {
-    const user = new ChatUser(
+    const user = new Player(
       ws.send.bind(ws), // fn to call to message this user
       req.params.roomName // name of room for user
     );
@@ -34,7 +25,6 @@ app.ws('/:roomName', function(ws, req, next) {
     // register handlers for message-received, connection-closed
 
     ws.on('message', function(data) {
-      // console.log('message received', JSON.parse(data));
       try {
         user.handleMessage(data);
       } catch (err) {

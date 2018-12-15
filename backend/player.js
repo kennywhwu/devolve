@@ -18,9 +18,9 @@ const playerColorKey = [
   'magenta',
 ];
 
-/** ChatUser is a individual connection from client -> server to chat. */
+/** Player is a individual connection from client -> server to chat. */
 
-class ChatUser {
+class Player {
   /** make chat: store connection-device, rooom */
 
   constructor(send, roomName) {
@@ -49,13 +49,9 @@ class ChatUser {
 
   async handleMessage(jsonData) {
     let msg = JSON.parse(jsonData);
-    // console.log('msg ', msg);
+    console.log('msg', msg);
     if (msg.type === 'join') {
       this.handleJoin(msg);
-    } else if (msg.type === 'chat') {
-      this.handleChat(msg.text);
-    } else if (msg.type === 'joke') {
-      this.handleJoke(await this.makeJokeRequest());
     } else if (msg.type === 'ready') {
       this.handleReady(msg);
     } else if (msg.type === 'start') {
@@ -234,24 +230,9 @@ class ChatUser {
     });
   }
 
-  async makeJokeRequest() {
-    let response = await axios.get('https://icanhazdadjoke.com/', {
-      headers: { accept: 'application/json' },
-    });
-    return response.data.joke;
-  }
-
-  async handleJoke(joke) {
-    this.display({
-      name: this.name,
-      type: 'chat',
-      text: joke,
-    });
-  }
-
   display(data) {
     this.send(JSON.stringify(data));
   }
 }
 
-module.exports = ChatUser;
+module.exports = Player;

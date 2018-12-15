@@ -28,11 +28,7 @@ class Loading extends Component {
 
   componentDidMount() {
     // Set up new websocket
-    this.connection = new WebSocket(
-      // `ws://localhost:3005/${roomName}`
-      `${WEBSOCKET_URL}/${roomName}`
-      // `${BASE_URL}/${roomName}`
-    );
+    this.connection = new WebSocket(`${WEBSOCKET_URL}/${roomName}`);
     console.log('this.connection', this.connection);
     // On open, send join data to server
     this.connection.onopen = evt => {
