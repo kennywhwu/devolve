@@ -2,6 +2,10 @@
 ![Devolve Logo](/devolve_logo.png?raw=true 'Devolve Logo')
 </center>
 
+<center>
+<img src="/devolve_logo.png?raw=true">
+</center>
+
 Devolve is an asymmetric multiplayer game built with [React](http://www.reactjs.org) and [Node.js](https://nodejs.org) over [websockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket).
 
 <center>
