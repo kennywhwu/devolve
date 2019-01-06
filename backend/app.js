@@ -15,6 +15,11 @@ const wsExpress = require('express-ws')(app);
 
 const Player = require('./player');
 
+const http = require('http');
+setInterval(function() {
+  http.get('http://devolve-game.herokuapp.com');
+}, 300000);
+
 app.ws('/:roomName', function(ws, req, next) {
   try {
     const user = new Player(
