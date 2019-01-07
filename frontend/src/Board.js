@@ -212,9 +212,9 @@ class Board extends Component {
 
   // Translate keyboard event into actual key pressed
   decodeKeyBoardEvent(evt) {
-    // if (keyDict[evt.key.toString()]) {
-    //   evt.preventDefault();
-    // }
+    if (keyDict[evt.key.toString()] && evt.type === 'keydown') {
+      evt.preventDefault();
+    }
     let keyDef = keyDict[evt.key.toString()];
     this.props.connection.send(
       JSON.stringify({
