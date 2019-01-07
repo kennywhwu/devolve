@@ -55,6 +55,7 @@ class Board extends Component {
       exit: { y: 1, x: 14 },
       isLoading: true,
       touchCount: 0,
+      keyDown: false,
     };
     this.GROWTH_RATE = 15 - this.props.players.small;
     this.decodeKeyBoardEvent = this.decodeKeyBoardEvent.bind(this);
@@ -215,6 +216,21 @@ class Board extends Component {
     if (keyDict[evt.key.toString()] && evt.type === 'keydown') {
       evt.preventDefault();
     }
+    // console.log('evt.type', evt.type);
+
+    // if (this.state.keyDown) {
+    //   if (evt.type === 'keyup') {
+    //     console.log('evt.type', evt.type);
+    //     this.setState(st => ({ keyDown: !st.keyDown }));
+    //   } else if (evt.type === 'keydown') {
+    //     console.log('evt.type', evt.type);
+    //   }
+    // }
+    // if (!this.state.keyDown && evt.type === 'keydown') {
+    //   this.setState(st => ({ keyDown: !st.keyDown }));
+    // }
+    // if (this.state.keyDown) return;
+
     let keyDef = keyDict[evt.key.toString()];
     this.props.connection.send(
       JSON.stringify({
@@ -743,7 +759,7 @@ class Board extends Component {
         <img
           id="up-arrow"
           className="arrow"
-          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/up-arrow.png"
+          src="/up-arrow.png"
           alt="up-arrow"
           width="35"
           onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowUp' })}
@@ -752,7 +768,7 @@ class Board extends Component {
         <img
           id="left-arrow"
           className="arrow"
-          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/left-arrow.png"
+          src="/left-arrow.png"
           alt="left-arrow"
           width="35"
           onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowLeft' })}
@@ -761,7 +777,7 @@ class Board extends Component {
         <img
           id="right-arrow"
           className="arrow"
-          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/right-arrow.png"
+          src="/right-arrow.png"
           alt="right-arrow"
           width="35"
           onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowRight' })}
@@ -770,7 +786,7 @@ class Board extends Component {
         <img
           id="down-arrow"
           className="arrow"
-          src="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-11/256/down-arrow.png"
+          src="/down-arrow.png"
           alt="down-arrow"
           width="35"
           onClick={this.decodeKeyBoardEvent.bind(this, { key: 'ArrowDown' })}
