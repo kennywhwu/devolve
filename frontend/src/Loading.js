@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 // import './Loading.css';
-import Board from './Board';
-import Ready from './Ready';
+import Board from "./Board";
+import Ready from "./Ready";
 
-const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3005';
+const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:3005";
 const WEBSOCKET_URL =
-  BASE_URL.substring(0, 5) === 'https'
-    ? BASE_URL.replace(/^https/, 'wss')
-    : BASE_URL.replace(/^http/, 'ws');
-const urlParts = document.URL.split('/');
-const roomName = urlParts[urlParts.length - 1] || 'game';
+  BASE_URL.substring(0, 5) === "https"
+    ? BASE_URL.replace(/^https/, "wss")
+    : BASE_URL.replace(/^http/, "ws");
+const urlParts = document.URL.split("/");
+const roomName = urlParts[urlParts.length - 1] || "game";
 
 class Loading extends Component {
   constructor(props) {
@@ -18,7 +18,7 @@ class Loading extends Component {
       isLoading: true,
       gameReady: false,
       playersReady: false,
-      currentPlayer: { player: '', color: '' },
+      currentPlayer: { player: "", color: "" },
       playerList: {},
     };
     this.handleStart = this.handleStart.bind(this);
@@ -29,31 +29,36 @@ class Loading extends Component {
   componentDidMount() {
     // Set up new websocket
     this.connection = new WebSocket(`${WEBSOCKET_URL}/${roomName}`);
-    console.log('this.connection', this.connection);
+    console.log("this.connection", this.connection);
     // On open, send join data to server
     this.connection.onopen = evt => {
-      console.log('open occurred');
-      this.connection.send(JSON.stringify({ type: 'join' }));
+      console.log("open occurred");
+      this.connection.send(JSON.stringify({ type: "join" }));
     };
 
     // On receiving signal from
     this.connection.onmessage = evt => {
       let data = JSON.parse(evt.data);
 
-      if (data.type === 'join') {
+      if (data.type === "join") {
+        setTimeout(() => {
+          if (Object.keys(this.state.playerList).length < 2)
+            window.open(`http://devolve-game.herokuapp.com/${roomName}`);
+        }, 3000);
+
         this.setState({
           currentPlayer: data.player,
           playerList: data.playerList,
           isLoading: false,
         });
       }
-      if (data.type === 'other_join') {
+      if (data.type === "other_join") {
         this.setState({ playerList: data.playerList });
       }
-      if (data.type === 'leave') {
+      if (data.type === "leave") {
         this.setState({ playerList: data.playerList });
       }
-      if (data.type === 'ready') {
+      if (data.type === "ready") {
         this.setState({ playerList: data.playerList }, () => {
           if (
             Object.values(this.state.playerList)
@@ -67,7 +72,7 @@ class Loading extends Component {
           }
         });
       }
-      if (data.type === 'start') {
+      if (data.type === "start") {
         this.setState({ gameReady: true });
       }
     };
@@ -76,7 +81,7 @@ class Loading extends Component {
   handleReady() {
     this.connection.send(
       JSON.stringify({
-        type: 'ready',
+        type: "ready",
       })
     );
   }
@@ -84,7 +89,7 @@ class Loading extends Component {
   handleStart() {
     this.connection.send(
       JSON.stringify({
-        type: 'start',
+        type: "start",
       })
     );
   }
